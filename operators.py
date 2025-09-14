@@ -376,7 +376,7 @@ class PD_OT_BakeSimCache(bpy.types.Operator):
                 success = bake_utils.bake_rigidbody_simulation(start_frame, end_frame)
 
                 if success:
-                    # Reset to start state like apply/reset does
+                    # Reset to default state like apply/reset does
                     # Stop animation if playing
                     screen = safe_context_access("screen")
                     if screen and getattr(screen, 'is_animation_playing', False):
@@ -386,6 +386,12 @@ class PD_OT_BakeSimCache(bpy.types.Operator):
                     # Set frame to start
                     scene.frame_current = constants.DEFAULT_FRAME_START
                     logger.debug("Reset frame to start position after cache baking")
+
+                    # Apply rigidbody to reset to default state (cleans up physics)
+                    if rb.apply_rigid():
+                        logger.info("Applied rigidbody simulation after cache baking - reset to default state")
+                    else:
+                        logger.warning("Issues occurred while resetting to default state after cache baking")
 
                     # Mark operation as successful
                     op.success = True
@@ -497,6 +503,13 @@ class PD_OT_BakeSimKeyframes(bpy.types.Operator):
                     # Set frame to start
                     scene.frame_current = constants.DEFAULT_FRAME_START
                     logger.debug("Reset frame to start position after keyframe baking")
+
+                    # Clear the baked cache since we've baked to keyframes
+                    try:
+                        bake_utils.clear_rigidbody_bake()
+                        logger.info("Cleared baked cache after keyframe baking")
+                    except Exception as e:
+                        logger.warning("Failed to clear baked cache after keyframe baking", e)
 
                     # Apply the simulation (this cleans up physics and finalizes transforms)
                     if rb.apply_rigid():
