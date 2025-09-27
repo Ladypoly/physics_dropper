@@ -151,13 +151,13 @@ class SafeOperation:
         self.success = False
 
     def __enter__(self):
-        self.logger.debug(f"Starting operation: {self.operation_name}")
+        # self.logger.debug(f"Starting operation: {self.operation_name}")
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None:
             self.success = True
-            self.logger.debug(f"Completed operation: {self.operation_name}")
+            # self.logger.debug(f"Completed operation: {self.operation_name}")
         else:
             self.logger.error(f"Failed operation: {self.operation_name}", exc_val)
         return False  # Don't suppress exceptions

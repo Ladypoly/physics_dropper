@@ -50,7 +50,7 @@ def duplicate(name: str, display_as: str) -> bool:
                     duplicated_objects.append(new_obj)
                     view_layer.objects.active = new_obj
 
-                    logger.debug(f"Duplicated object: {obj.name} -> {new_obj.name}")
+                    # logger.debug(f"Duplicated object: {obj.name} -> {new_obj.name}")
 
                 except Exception as e:
                     logger.warning(f"Failed to duplicate object {safe_object_access(obj, 'name', 'Unknown')}", e)
@@ -87,7 +87,7 @@ def duplicate(name: str, display_as: str) -> bool:
             # Join selected objects
             try:
                 bpy.ops.object.join()
-                logger.debug(f"Joined {valid_objects} objects")
+                # logger.debug(f"Joined {valid_objects} objects")
             except Exception as e:
                 logger.error("Failed to join objects", e)
                 return False
@@ -119,7 +119,7 @@ def duplicate(name: str, display_as: str) -> bool:
                 if not _apply_optimization_modifiers(active_object):
                     logger.warning("Optimization modifiers failed but continuing")
 
-            logger.info(f"Successfully created collision object: {name}")
+            # logger.info(f"Successfully created collision object: {name}")
             op.success = True
             return True
 
@@ -141,7 +141,7 @@ def _apply_optimization_modifiers(obj: Any) -> bool:
             try:
                 remesh = obj.modifiers.new(name="Remesh", type='REMESH')
                 remesh.voxel_size = min(voxel_size, constants.VOXEL_SIZE_MAX)
-                logger.debug(f"Added remesh modifier with voxel size: {remesh.voxel_size}")
+                # logger.debug(f"Added remesh modifier with voxel size: {remesh.voxel_size}")
             except Exception as e:
                 logger.warning("Failed to add remesh modifier", e)
                 return False
@@ -152,7 +152,7 @@ def _apply_optimization_modifiers(obj: Any) -> bool:
             decimate = obj.modifiers.new(name="Decimate", type='DECIMATE')
             decimate.ratio = max(constants.DECIMATE_RATIO_MIN,
                                min(constants.DECIMATE_RATIO_MAX, decimate_rate))
-            logger.debug(f"Added decimate modifier with ratio: {decimate.ratio}")
+            # logger.debug(f"Added decimate modifier with ratio: {decimate.ratio}")
         except Exception as e:
             logger.warning("Failed to add decimate modifier", e)
             return False
@@ -160,7 +160,7 @@ def _apply_optimization_modifiers(obj: Any) -> bool:
         # Convert to mesh
         try:
             bpy.ops.object.convert(target='MESH')
-            logger.debug("Converted object to mesh")
+            # logger.debug("Converted object to mesh")
         except Exception as e:
             logger.warning("Failed to convert to mesh", e)
             return False
@@ -185,7 +185,7 @@ def set_world_settings() -> bool:
             # Ensure rigidbody world exists
             rb_world = safe_context_access("scene.rigidbody_world")
             if not rb_world:
-                logger.info("Creating rigidbody world")
+                # logger.info("Creating rigidbody world")
                 try:
                     bpy.ops.rigidbody.world_add()
                     rb_world = safe_context_access("scene.rigidbody_world")
@@ -214,7 +214,7 @@ def set_world_settings() -> bool:
                     safe_object_access(effector_weights, "gravity", 1.0) if effector_weights else 1.0
                 ]
                 utils.state.set_rigidbody("world_settings", original_settings)
-                logger.debug("Stored original world settings")
+                # logger.debug("Stored original world settings")
 
             except Exception as e:
                 logger.warning("Failed to store some original settings", e)
@@ -260,7 +260,7 @@ def set_world_settings() -> bool:
                 if hasattr(rb_world, 'effector_weights'):
                     rb_world.effector_weights.gravity = 1.0
 
-                logger.info(f"Applied world settings: frames {start_frame}-{end_frame}, substeps {substeps}")
+                # logger.info(f"Applied world settings: frames {start_frame}-{end_frame}, substeps {substeps}")
                 return True
 
             except Exception as e:
@@ -279,7 +279,7 @@ def revert_world_settings() -> bool:
         with SafeOperation("revert_world_settings"):
             original_settings = utils.state.get_rigidbody("world_settings")
             if not original_settings:
-                logger.info("No original settings to revert")
+                # logger.info("No original settings to revert")
                 return True
 
             rb_world = safe_context_access("scene.rigidbody_world")
@@ -319,7 +319,7 @@ def revert_world_settings() -> bool:
 
                 # Clear the stored settings
                 utils.state.set_rigidbody("world_settings", [])
-                logger.info("Successfully reverted world settings")
+                # logger.info("Successfully reverted world settings")
                 return True
 
             except Exception as e:
@@ -356,7 +356,7 @@ def set_rigid_passive() -> bool:
             # Add rigidbody
             try:
                 bpy.ops.rigidbody.objects_add(type='PASSIVE')
-                logger.debug("Added passive rigidbody")
+                # logger.debug("Added passive rigidbody")
             except Exception as e:
                 logger.error("Failed to add passive rigidbody", e)
                 return False
@@ -379,14 +379,15 @@ def set_rigid_passive() -> bool:
                     success_count += 1
 
                 if success_count > 0:
-                    logger.info(f"Applied earthquake effects to collision object on {success_count}/3 axes")
+                    # logger.info(f"Applied earthquake effects to collision object on {success_count}/3 axes")
+                    pass
                 else:
                     logger.warning("Failed to apply earthquake effects to collision object")
 
             except Exception as e:
                 logger.warning("Failed to apply earthquake effects to collision object", e)
 
-            logger.info("Successfully configured passive rigidbody object")
+            # logger.info("Successfully configured passive rigidbody object")
             return True
 
     except Exception as e:
@@ -432,7 +433,7 @@ def _configure_passive_rigidbody(obj: Any) -> bool:
         mass = getattr(scene, 'a_mass', constants.MASS_DEFAULT)
         rigid_body.mass = max(constants.MASS_MIN, min(constants.MASS_MAX, mass))
 
-        logger.debug(f"Configured passive rigidbody: shape={shape}, friction={friction}, bounciness={bounciness}")
+        # logger.debug(f"Configured passive rigidbody: shape={shape}, friction={friction}, bounciness={bounciness}")
         return True
 
     except Exception as e:
@@ -481,19 +482,19 @@ def set_rigid_active() -> bool:
                 logger.error("No valid objects selected for active rigidbody setup")
                 return False
 
-            logger.info(f"Configuring {len(valid_objects)} active rigidbody objects")
+            # logger.info(f"Configuring {len(valid_objects)} active rigidbody objects")
 
             # Set origin to center of mass
             try:
                 bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_VOLUME', center='MEDIAN')
-                logger.debug("Set origins to center of volume")
+                # logger.debug("Set origins to center of volume")
             except Exception as e:
                 logger.warning("Failed to set origins", e)
 
             # Add rigidbody
             try:
                 bpy.ops.rigidbody.objects_add(type='ACTIVE')
-                logger.debug("Added active rigidbodies")
+                # logger.debug("Added active rigidbodies")
             except Exception as e:
                 logger.error("Failed to add active rigidbodies", e)
                 return False
@@ -504,15 +505,15 @@ def set_rigid_active() -> bool:
                 if _configure_active_rigidbody(obj):
                     configured_count += 1
 
-            logger.info(f"Successfully configured {configured_count}/{len(valid_objects)} active rigidbodies")
+            # logger.info(f"Successfully configured {configured_count}/{len(valid_objects)} active rigidbodies")
 
             # Earthquake effects are applied to the collision object (passive rigidbody)
-            logger.debug("Active rigidbody objects configured (no keyframes added to preserve physics)")
+            # logger.debug("Active rigidbody objects configured (no keyframes added to preserve physics)")
 
             # Start animation
             try:
                 bpy.ops.screen.animation_play()
-                logger.info("Started physics animation")
+                # logger.info("Started physics animation")
             except Exception as e:
                 logger.warning("Failed to start animation", e)
 
@@ -564,7 +565,7 @@ def _configure_active_rigidbody(obj: Any) -> bool:
         rigid_body.use_margin = True
         rigid_body.mesh_source = 'FINAL'
 
-        logger.debug(f"Configured active rigidbody for {safe_object_access(obj, 'name', 'Unknown')}")
+        # logger.debug(f"Configured active rigidbody for {safe_object_access(obj, 'name', 'Unknown')}")
         return True
 
     except Exception as e:
@@ -643,7 +644,7 @@ def duplicate_link() -> bool:
                     if not _apply_active_optimization_modifiers(new_obj):
                         logger.warning(f"Failed to optimize {new_obj.name}")
 
-                    logger.debug(f"Created optimized proxy: {active_obj.name} -> {new_obj.name}")
+                    # logger.debug(f"Created optimized proxy: {active_obj.name} -> {new_obj.name}")
 
                 except Exception as e:
                     logger.error(f"Failed to create proxy for {safe_object_access(active_obj, 'name', 'Unknown')}", e)
@@ -661,7 +662,7 @@ def duplicate_link() -> bool:
 
                 try:
                     bpy.ops.object.convert(target='MESH')
-                    logger.info(f"Created {len(low_poly_list)} optimization proxies")
+                    # logger.info(f"Created {len(low_poly_list)} optimization proxies")
                 except Exception as e:
                     logger.warning("Failed to convert proxies to mesh", e)
 
@@ -715,7 +716,7 @@ def apply_duplicate_link() -> bool:
             low_poly_objects = utils.state.get_rigidbody("low_poly_list")
 
             if not high_poly_objects and not low_poly_objects:
-                logger.info("No optimization proxies to clean up")
+                # logger.info("No optimization proxies to clean up")
                 return True
 
             # Unhide and clear parents from high-poly objects
@@ -738,7 +739,7 @@ def apply_duplicate_link() -> bool:
                         except Exception as e:
                             logger.warning(f"Failed to restore high-poly object {safe_object_access(obj, 'name', 'Unknown')}", e)
 
-            logger.info(f"Restored {restored_count} high-poly objects")
+            # logger.info(f"Restored {restored_count} high-poly objects")
 
             # Delete low-poly proxy objects
             deleted_count = 0
@@ -748,7 +749,7 @@ def apply_duplicate_link() -> bool:
                         if utils.safe_object_delete(obj):
                             deleted_count += 1
 
-            logger.info(f"Deleted {deleted_count} low-poly proxy objects")
+            # logger.info(f"Deleted {deleted_count} low-poly proxy objects")
 
             # Clear the lists
             utils.state.set_rigidbody("high_poly_list", [])
@@ -766,7 +767,7 @@ def drop_rigid() -> bool:
     """Initialize rigidbody physics simulation with comprehensive error handling."""
     try:
         with SafeOperation("drop_rigid_physics") as op:
-            logger.info("Starting rigidbody physics simulation")
+            # logger.info("Starting rigidbody physics simulation")
 
             # Reset state
             utils.state.set_rigidbody("active", [])
@@ -799,7 +800,7 @@ def drop_rigid() -> bool:
                 return False
 
             utils.state.set_rigidbody("active", active_objects)
-            logger.info(f"Selected {len(active_objects)} objects for rigidbody physics")
+            # logger.info(f"Selected {len(active_objects)} objects for rigidbody physics")
 
             # Invert selection to find collision objects
             try:
@@ -835,7 +836,7 @@ def drop_rigid() -> bool:
             # Handle optimization if enabled
             use_optimization = scene and getattr(scene, 'optimizehighpoly', False)
             if use_optimization:
-                logger.info("Using high-poly optimization")
+                # logger.info("Using high-poly optimization")
                 if not duplicate_link():
                     logger.warning("Optimization setup failed, using original objects")
                     use_optimization = False
@@ -846,7 +847,7 @@ def drop_rigid() -> bool:
 
             # Mark as successful
             op.success = True
-            logger.info("Successfully initialized rigidbody physics simulation")
+            # logger.info("Successfully initialized rigidbody physics simulation")
             return True
 
     except Exception as e:
@@ -859,7 +860,7 @@ def apply_rigid() -> bool:
     """Apply rigidbody physics results and clean up with comprehensive error handling."""
     try:
         with SafeOperation("apply_rigid_physics") as op:
-            logger.info("Applying rigidbody physics simulation")
+            # logger.info("Applying rigidbody physics simulation")
 
             # Clear dropped flag
             scene = safe_context_access("scene")
@@ -891,7 +892,7 @@ def apply_rigid() -> bool:
             if valid_objects:
                 try:
                     bpy.ops.object.visual_transform_apply()
-                    logger.info(f"Applied visual transforms to {len(valid_objects)} objects")
+                    # logger.info(f"Applied visual transforms to {len(valid_objects)} objects")
                 except Exception as e:
                     logger.warning("Failed to apply visual transforms", e)
 
@@ -904,7 +905,7 @@ def apply_rigid() -> bool:
                             view_layer = safe_context_access("view_layer")
                             if view_layer and view_layer.objects.active:
                                 bpy.ops.rigidbody.objects_remove()
-                                logger.debug("Removed rigidbody properties from active objects")
+                                # logger.debug("Removed rigidbody properties from active objects")
                             else:
                                 logger.warning("No active object for rigidbody removal")
                         else:
@@ -920,7 +921,8 @@ def apply_rigid() -> bool:
             passive_obj = utils.state.get_rigidbody("passive")
             if passive_obj:
                 if utils.safe_object_delete(passive_obj):
-                    logger.info("Deleted passive collision object")
+                    # logger.info("Deleted passive collision object")
+                    pass
                 else:
                     logger.warning("Failed to delete passive collision object")
                 utils.state.set_rigidbody("passive", None)
@@ -933,7 +935,7 @@ def apply_rigid() -> bool:
                     if utils.safe_select_object(obj):
                         selected_count += 1
 
-            logger.info(f"Selected {selected_count} objects after applying physics")
+            # logger.info(f"Selected {selected_count} objects after applying physics")
 
             # Clear active objects list
             utils.state.set_rigidbody("active", [])
@@ -947,7 +949,7 @@ def apply_rigid() -> bool:
 
             # Mark as successful
             op.success = True
-            logger.info("Successfully applied rigidbody physics simulation")
+            # logger.info("Successfully applied rigidbody physics simulation")
             return True
 
     except Exception as e:
@@ -961,7 +963,7 @@ def select_active() -> bool:
     try:
         active_objects = utils.state.get_rigidbody("active")
         if not active_objects:
-            logger.info("No active objects to select")
+            # logger.info("No active objects to select")
             return False
 
         utils.safe_deselect_all()
@@ -972,7 +974,7 @@ def select_active() -> bool:
                 if utils.safe_select_object(obj):
                     selected_count += 1
 
-        logger.info(f"Selected {selected_count}/{len(active_objects)} active objects")
+        # logger.info(f"Selected {selected_count}/{len(active_objects)} active objects")
         return selected_count > 0
 
     except Exception as e:
@@ -986,17 +988,17 @@ def remove_simple_force() -> bool:
     try:
         force_obj = utils.state.get_physics_dropper("force_object")
         if not force_obj:
-            logger.debug("No force object to remove")
+            # logger.debug("No force object to remove")
             return True
 
         if not utils.is_object_valid(force_obj):
-            logger.debug("Force object already invalid")
+            # logger.debug("Force object already invalid")
             utils.state.set_physics_dropper("force_object", None)
             return True
 
         if utils.safe_object_delete(force_obj):
             utils.state.set_physics_dropper("force_object", None)
-            logger.info("Successfully removed force field")
+            # logger.info("Successfully removed force field")
             return True
         else:
             logger.warning("Failed to delete force field object")

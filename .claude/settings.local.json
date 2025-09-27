@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(\"/c/Users/Elin/AppData/Local/Programs/Python/Python312/python.exe\" -m py_compile __init__.py operators.py properties.py rigidbody.py bake_utils.py utils.py logger.py)"
     ],
     "deny": [],
     "ask": []

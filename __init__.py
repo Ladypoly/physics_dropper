@@ -43,14 +43,14 @@ def undo_pre_handler(dummy):
     try:
         # Clean up any invalid object references after undo
         utils.cleanup_invalid_references()
-        logger.logger.debug("Cleaned up invalid references after undo")
+        # logger.logger.debug("Cleaned up invalid references after undo")
     except Exception as e:
         logger.logger.error("Error in undo handler", e)
 
 def register():
     """Register the addon with improved error handling."""
     try:
-        logger.logger.info(f"Registering {constants.ADDON_NAME} v{constants.ADDON_VERSION}")
+        # logger.logger.info(f"Registering {constants.ADDON_NAME} v{constants.ADDON_VERSION}")
 
         # Initialize logging level from preferences if available
         try:
@@ -75,7 +75,7 @@ def register():
         for module in modules:
             try:
                 module.register()
-                logger.logger.debug(f"Registered module: {module.__name__}")
+                # logger.logger.debug(f"Registered module: {module.__name__}")
             except Exception as e:
                 logger.logger.error(f"Failed to register module {module.__name__}", e)
                 # Continue with other modules
@@ -83,14 +83,14 @@ def register():
         # Register handlers safely
         if undo_pre_handler not in bpy.app.handlers.undo_pre:
             bpy.app.handlers.undo_pre.append(undo_pre_handler)
-            logger.logger.debug("Registered undo handler")
+            # logger.logger.debug("Registered undo handler")
 
 
         # Validate scene state
         if not utils.validate_scene_state():
             logger.logger.warning("Scene state validation failed")
 
-        logger.logger.info(f"Successfully registered {constants.ADDON_NAME}")
+        # logger.logger.info(f"Successfully registered {constants.ADDON_NAME}")
 
     except Exception as e:
         logger.logger.critical(f"Critical error during addon registration", e)
@@ -104,14 +104,14 @@ def register():
 def unregister():
     """Unregister the addon with safe cleanup."""
     try:
-        logger.logger.info(f"Unregistering {constants.ADDON_NAME}")
+        # logger.logger.info(f"Unregistering {constants.ADDON_NAME}")
 
 
         # Unregister handlers safely
         if undo_pre_handler in bpy.app.handlers.undo_pre:
             try:
                 bpy.app.handlers.undo_pre.remove(undo_pre_handler)
-                logger.logger.debug("Unregistered undo handler")
+                # logger.logger.debug("Unregistered undo handler")
             except ValueError:
                 logger.logger.warning("Undo handler was not in the handlers list")
 
@@ -119,7 +119,7 @@ def unregister():
         try:
             utils.state.reset_all()
             utils.cleanup_invalid_references()
-            logger.logger.debug("Cleaned up physics state")
+            # logger.logger.debug("Cleaned up physics state")
         except Exception as e:
             logger.logger.warning("Error cleaning up physics state", e)
 
@@ -127,7 +127,7 @@ def unregister():
         for module in reversed(modules):
             try:
                 module.unregister()
-                logger.logger.debug(f"Unregistered module: {module.__name__}")
+                # logger.logger.debug(f"Unregistered module: {module.__name__}")
             except Exception as e:
                 logger.logger.warning(f"Error unregistering module {module.__name__}", e)
                 # Continue with other modules
@@ -140,7 +140,7 @@ def unregister():
         if not properties.unregister():
             logger.logger.warning("Property unregistration had issues")
 
-        logger.logger.info(f"Successfully unregistered {constants.ADDON_NAME}")
+        # logger.logger.info(f"Successfully unregistered {constants.ADDON_NAME}")
 
     except Exception as e:
         logger.logger.critical(f"Critical error during addon unregistration", e)

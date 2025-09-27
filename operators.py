@@ -29,7 +29,7 @@ class PD_OT_SetRigid(bpy.types.Operator):
             scene = safe_context_access("scene")
             if scene:
                 scene.is_rigid = True
-                logger.info("Switched to rigidbody physics mode")
+                # logger.info("Switched to rigidbody physics mode")
                 return {"FINISHED"}
             else:
                 self.report({'ERROR'}, constants.ERROR_MESSAGES['INVALID_CONTEXT'])
@@ -48,7 +48,7 @@ class PD_OT_SetCloth(bpy.types.Operator):
             scene = safe_context_access("scene")
             if scene:
                 scene.is_rigid = False
-                logger.info("Switched to cloth physics mode")
+                # logger.info("Switched to cloth physics mode")
                 return {"FINISHED"}
             else:
                 self.report({'ERROR'}, constants.ERROR_MESSAGES['INVALID_CONTEXT'])
@@ -108,7 +108,7 @@ class PD_OT_Drop(bpy.types.Operator):
                     rigidbody_world = safe_context_access("scene.rigidbody_world")
                     if rigidbody_world:
                         bpy.ops.ptcache.free_bake_all()
-                        logger.debug("Cleared existing physics cache")
+                        # logger.debug("Cleared existing physics cache")
                 except Exception as e:
                     logger.warning("Error clearing physics cache", e)
                     # Continue anyway
@@ -117,13 +117,15 @@ class PD_OT_Drop(bpy.types.Operator):
                 is_rigid = safe_context_access("scene.is_rigid", True)
                 if is_rigid:
                     if rb.drop_rigid():
-                        logger.info("Started rigidbody physics simulation")
+                        # logger.info("Started rigidbody physics simulation")
+                        pass
                     else:
                         self.report({'ERROR'}, "Failed to start rigidbody simulation")
                         return {"CANCELLED"}
                 else:
                     if cloth_module.drop_cloth():
-                        logger.info("Started cloth physics simulation")
+                        # logger.info("Started cloth physics simulation")
+                        pass
                     else:
                         self.report({'ERROR'}, "Failed to start cloth simulation")
                         return {"CANCELLED"}
@@ -166,13 +168,15 @@ class PD_OT_Apply(bpy.types.Operator):
 
                 if is_rigid:
                     if rb.apply_rigid():
-                        logger.info("Applied rigidbody physics simulation")
+                        # logger.info("Applied rigidbody physics simulation")
+                        pass
                     else:
                         self.report({'ERROR'}, "Failed to apply rigidbody simulation")
                         return {"CANCELLED"}
                 else:
                     if cloth_module.apply_cloth():
-                        logger.info("Applied cloth physics simulation")
+                        # logger.info("Applied cloth physics simulation")
+                        pass
                     else:
                         self.report({'ERROR'}, "Failed to apply cloth simulation")
                         return {"CANCELLED"}
@@ -181,13 +185,13 @@ class PD_OT_Apply(bpy.types.Operator):
                 screen = safe_context_access("screen")
                 if screen and getattr(screen, 'is_animation_playing', False):
                     bpy.ops.screen.animation_play()
-                    logger.debug("Stopped animation playback after apply")
+                    # logger.debug("Stopped animation playback after apply")
 
                 # Set frame to start
                 scene = safe_context_access("scene")
                 if scene:
                     scene.frame_current = constants.DEFAULT_FRAME_START
-                    logger.debug("Reset frame to start position after apply")
+                    # logger.debug("Reset frame to start position after apply")
 
                 # Mark operation as successful
                 op.success = True
@@ -219,7 +223,7 @@ class PD_OT_Reset(bpy.types.Operator):
                 screen = safe_context_access("screen")
                 if screen and getattr(screen, 'is_animation_playing', False):
                     bpy.ops.screen.animation_play()
-                    logger.debug("Stopped animation playback")
+                    # logger.debug("Stopped animation playback")
 
                 # Set frame to start
                 scene = safe_context_access("scene")
@@ -237,7 +241,7 @@ class PD_OT_Reset(bpy.types.Operator):
 
                 # Mark operation as successful
                 op.success = True
-                logger.info("Physics reset completed successfully")
+                # logger.info("Physics reset completed successfully")
                 self.report({'INFO'}, constants.SUCCESS_MESSAGES['SIMULATION_RESET'])
                 return {"FINISHED"}
 
@@ -272,7 +276,7 @@ class PD_OT_ExitPhysicsMode(bpy.types.Operator):
 
                 # Mark operation as successful
                 op.success = True
-                logger.info("Exited physics dropper mode, simulation continues")
+                # logger.info("Exited physics dropper mode, simulation continues")
                 self.report({'INFO'}, "Exited physics mode, simulation continues")
                 return {"FINISHED"}
 
@@ -341,7 +345,7 @@ class PD_OT_SimpleForce(bpy.types.Operator):
                         force_object.field.distance_max = getattr(scene, 'forcedistance', constants.FORCE_DISTANCE_DEFAULT)
                         force_object.field.flow = getattr(scene, 'forceflow', constants.FORCE_FLOW_DEFAULT)
 
-                logger.info("Added force field successfully")
+                # logger.info("Added force field successfully")
                 self.report({'INFO'}, constants.SUCCESS_MESSAGES['FORCE_ADDED'])
                 return {"FINISHED"}
 
@@ -614,13 +618,13 @@ class PD_OT_BakeSimKeyframes(bpy.types.Operator):
                     self.report({'ERROR'}, f"Current frame ({current_frame}) is before start frame ({start_frame}). Please advance the timeline.")
                     return {"CANCELLED"}
 
-                logger.info(f"Baking simulation to keyframes from frame {start_frame} to {end_frame} (current frame)")
+                # logger.info(f"Baking simulation to keyframes from frame {start_frame} to {end_frame} (current frame)")
 
                 # Step 1: First bake to cache (this preserves the current simulation state)
                 try:
                     from . import bake_utils
                     bake_utils.rb_bake_from_current_cache()
-                    logger.info("Successfully baked current simulation to cache")
+                    # logger.info("Successfully baked current simulation to cache")
                 except Exception as e:
                     logger.error("Failed to bake to cache before keyframe baking", e)
                     self.report({'ERROR'}, "Failed to bake current simulation to cache")
@@ -638,30 +642,31 @@ class PD_OT_BakeSimKeyframes(bpy.types.Operator):
                         frame_end=end_frame,
                         step=1
                     )
-                    logger.info("Successfully baked cached simulation to keyframes")
+                    # logger.info("Successfully baked cached simulation to keyframes")
 
                     # Step 4: Reset to start state like apply/reset does
                     # Stop animation if playing
                     screen = safe_context_access("screen")
                     if screen and getattr(screen, 'is_animation_playing', False):
                         bpy.ops.screen.animation_play()
-                        logger.debug("Stopped animation playback after keyframe baking")
+                        # logger.debug("Stopped animation playback after keyframe baking")
 
                     # Set frame to start
                     scene.frame_current = constants.DEFAULT_FRAME_START
-                    logger.debug("Reset frame to start position after keyframe baking")
+                    # logger.debug("Reset frame to start position after keyframe baking")
 
                     # Clear the baked cache since we've baked to keyframes
                     try:
                         from . import bake_utils
                         bake_utils.clear_rigidbody_bake()
-                        logger.info("Cleared baked cache after keyframe baking")
+                        # logger.info("Cleared baked cache after keyframe baking")
                     except Exception as e:
                         logger.warning("Failed to clear baked cache after keyframe baking", e)
 
                     # Apply the simulation (this cleans up physics and finalizes transforms)
                     if rb.apply_rigid():
-                        logger.info("Applied rigidbody simulation after keyframe baking")
+                        # logger.info("Applied rigidbody simulation after keyframe baking")
+                        pass
                     else:
                         logger.warning("Issues occurred while applying rigidbody after keyframe baking")
 
@@ -691,14 +696,14 @@ class PD_OT_BakeSimKeyframes(bpy.types.Operator):
                 collider = scene.objects.get(constants.COLLIDER_OBJECT_NAME)
                 if collider and utils.is_object_valid(collider):
                     utils.safe_object_delete(collider)
-                    logger.debug("COLLIDER object deleted after keyframe bake")
+                    # logger.debug("COLLIDER object deleted after keyframe bake")
 
                 # Also clean up passive object
                 passive_obj = utils.state.get_rigidbody("passive")
                 if passive_obj and utils.is_object_valid(passive_obj):
                     utils.safe_object_delete(passive_obj)
                     utils.state.set_rigidbody("passive", None)
-                    logger.debug("Passive object deleted after keyframe bake")
+                    # logger.debug("Passive object deleted after keyframe bake")
 
         except Exception as e:
             logger.warning("Error during keyframe bake cleanup", e)
@@ -728,9 +733,11 @@ class PD_OT_PauseSim(bpy.types.Operator):
                 bpy.ops.screen.animation_play()
 
                 if was_playing:
-                    logger.debug("Paused animation playback")
+                    # logger.debug("Paused animation playback")
+                    pass
                 else:
-                    logger.debug("Started animation playback")
+                    # logger.debug("Started animation playback")
+                    pass
 
                 return {"FINISHED"}
             else:
@@ -878,7 +885,7 @@ def register_keymaps() -> bool:
         except Exception as e:
             logger.warning("Failed to register 'force' keymap", e)
 
-        logger.info(f"Registered {registered_count}/3 keymaps successfully")
+        # logger.info(f"Registered {registered_count}/3 keymaps successfully")
         return registered_count > 0
 
     except Exception as e:
@@ -894,12 +901,12 @@ def unregister_keymaps() -> bool:
             try:
                 km.keymap_items.remove(kmi)
                 unregistered_count += 1
-                logger.debug(f"Unregistered keymap: {km_name}")
+                # logger.debug(f"Unregistered keymap: {km_name}")
             except Exception as e:
                 logger.warning(f"Failed to unregister keymap {km_name}", e)
 
         utils.addon_keymaps.clear()
-        logger.info(f"Unregistered {unregistered_count} keymaps")
+        # logger.info(f"Unregistered {unregistered_count} keymaps")
         return True
 
     except Exception as e:
@@ -915,14 +922,14 @@ def register() -> bool:
             try:
                 bpy.utils.register_class(cls)
                 registered_operators += 1
-                logger.debug(f"Registered operator: {cls.__name__}")
+                # logger.debug(f"Registered operator: {cls.__name__}")
             except Exception as e:
                 logger.error(f"Failed to register operator {cls.__name__}", e)
 
         if not register_keymaps():
             logger.warning("Keymap registration had issues")
 
-        logger.info(f"Registered {registered_operators}/{len(operators)} operators")
+        # logger.info(f"Registered {registered_operators}/{len(operators)} operators")
         return registered_operators > 0
 
     except Exception as e:
@@ -941,11 +948,11 @@ def unregister() -> bool:
             try:
                 bpy.utils.unregister_class(cls)
                 unregistered_operators += 1
-                logger.debug(f"Unregistered operator: {cls.__name__}")
+                # logger.debug(f"Unregistered operator: {cls.__name__}")
             except Exception as e:
                 logger.warning(f"Failed to unregister operator {cls.__name__}", e)
 
-        logger.info(f"Unregistered {unregistered_operators}/{len(operators)} operators")
+        # logger.info(f"Unregistered {unregistered_operators}/{len(operators)} operators")
         return True
 
     except Exception as e:

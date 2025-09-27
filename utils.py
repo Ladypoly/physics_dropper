@@ -157,7 +157,7 @@ def register_icons() -> bool:
             if missing_icons:
                 logger.warning(f"Missing icon files: {missing_icons}")
 
-            logger.info(f"Registered {len(constants.ICON_NAMES) - len(missing_icons)} icons")
+            # logger.info(f"Registered {len(constants.ICON_NAMES) - len(missing_icons)} icons")
             return True
     except Exception as e:
         logger.error("Failed to register icons", e)
@@ -170,7 +170,7 @@ def unregister_icons() -> bool:
             if hasattr(bpy.types.Scene, 'physics_dropper_icons'):
                 previews.remove(bpy.types.Scene.physics_dropper_icons)
                 delattr(bpy.types.Scene, 'physics_dropper_icons')
-                logger.info("Unregistered icons successfully")
+                # logger.info("Unregistered icons successfully")
             else:
                 logger.warning("No icons to unregister")
             return True
@@ -195,7 +195,7 @@ def check_mesh_selected() -> bool:
                 logger.warning("No mesh objects selected")
             else:
                 mesh_count = sum(1 for obj in selected_objects if safe_object_access(obj, "type") == "MESH")
-                logger.info(f"Found {mesh_count} mesh objects selected")
+                # logger.info(f"Found {mesh_count} mesh objects selected")
 
             return mesh_selected
     except Exception as e:
@@ -218,7 +218,7 @@ def post_bake() -> bool:
             if passive_obj and is_object_valid(passive_obj):
                 if safe_object_delete(passive_obj):
                     state.set_rigidbody("passive", None)
-                    logger.info("Deleted passive rigidbody object")
+                    # logger.info("Deleted passive rigidbody object")
                 else:
                     logger.warning("Failed to delete passive rigidbody object")
 
@@ -233,7 +233,7 @@ def post_bake() -> bool:
                         valid_count += 1
 
             state.set_rigidbody("active", [])
-            logger.info(f"Selected {valid_count} active objects for cleanup")
+            # logger.info(f"Selected {valid_count} active objects for cleanup")
 
             # Reset frame and settings
             scene = safe_context_access("scene")
@@ -243,7 +243,7 @@ def post_bake() -> bool:
             if not rb_module.revert_world_settings():
                 logger.warning("Failed to revert world settings")
 
-            logger.info("Post-bake cleanup completed successfully")
+            # logger.info("Post-bake cleanup completed successfully")
             return None  # Return None to run timer only once
 
     except Exception as e:
@@ -264,7 +264,7 @@ def is_object_valid(obj: Any) -> bool:
         _ = obj.name
         return True
     except ReferenceError:
-        logger.debug("Object reference is no longer valid")
+        # logger.debug("Object reference is no longer valid")
         return False
     except Exception as e:
         logger.warning(f"Unexpected error checking object validity: {e}")
@@ -275,7 +275,7 @@ def safe_object_delete(obj: Any) -> bool:
     """Safely delete a Blender object."""
     try:
         if not is_object_valid(obj):
-            logger.debug("Object already invalid, nothing to delete")
+            # logger.debug("Object already invalid, nothing to delete")
             return True
 
         # Check if object is in the current scene
@@ -290,7 +290,7 @@ def safe_object_delete(obj: Any) -> bool:
         safe_deselect_all()
         if safe_select_object(obj):
             bpy.ops.object.delete()
-            logger.debug(f"Successfully deleted object: {obj_name}")
+            # logger.debug(f"Successfully deleted object: {obj_name}")
             return True
         else:
             logger.warning(f"Failed to select object for deletion: {obj_name}")
@@ -382,13 +382,13 @@ def cleanup_invalid_references() -> None:
             force_obj = state.get_physics_dropper("force_object")
             if force_obj and not is_object_valid(force_obj):
                 state.set_physics_dropper("force_object", None)
-                logger.debug("Cleaned invalid force object reference")
+                # logger.debug("Cleaned invalid force object reference")
 
             # Clean rigidbody state
             passive = state.get_rigidbody("passive")
             if passive and not is_object_valid(passive):
                 state.set_rigidbody("passive", None)
-                logger.debug("Cleaned invalid passive object reference")
+                # logger.debug("Cleaned invalid passive object reference")
 
             # Clean active object lists
             active_objects = state.get_rigidbody("active")
@@ -396,20 +396,20 @@ def cleanup_invalid_references() -> None:
                 valid_active = [obj for obj in active_objects if is_object_valid(obj)]
                 if len(valid_active) != len(active_objects):
                     state.set_rigidbody("active", valid_active)
-                    logger.debug(f"Cleaned {len(active_objects) - len(valid_active)} invalid active object references")
+                    # logger.debug(f"Cleaned {len(active_objects) - len(valid_active)} invalid active object references")
 
             # Clean cloth state
             cloth_passive = state.get_cloth("passive")
             if cloth_passive and not is_object_valid(cloth_passive):
                 state.set_cloth("passive", None)
-                logger.debug("Cleaned invalid cloth passive object reference")
+                # logger.debug("Cleaned invalid cloth passive object reference")
 
             cloth_active = state.get_cloth("active")
             if cloth_active:
                 valid_cloth_active = [obj for obj in cloth_active if is_object_valid(obj)]
                 if len(valid_cloth_active) != len(cloth_active):
                     state.set_cloth("active", valid_cloth_active)
-                    logger.debug(f"Cleaned {len(cloth_active) - len(valid_cloth_active)} invalid cloth active object references")
+                    # logger.debug(f"Cleaned {len(cloth_active) - len(valid_cloth_active)} invalid cloth active object references")
 
     except Exception as e:
         logger.error("Error during cleanup of invalid references", e)

@@ -77,7 +77,7 @@ def clear_rigidbody_bake() -> bool:
             # Check if there's anything to clear
             rb_world = utils.safe_context_access("scene.rigidbody_world")
             if not rb_world:
-                logger.info("No rigidbody world found, nothing to clear")
+                # logger.info("No rigidbody world found, nothing to clear")
                 return True
 
             point_cache = getattr(rb_world, 'point_cache', None)
@@ -86,17 +86,18 @@ def clear_rigidbody_bake() -> bool:
                 return True
 
             if not point_cache.is_baked:
-                logger.info("No baked cache found, nothing to clear")
+                # logger.info("No baked cache found, nothing to clear")
                 return True
 
             # Clear the cache
             try:
                 bpy.ops.ptcache.free_bake_all()
-                logger.info("Successfully cleared all physics caches")
+                # logger.info("Successfully cleared all physics caches")
 
                 # Verify clearing was successful
                 if not point_cache.is_baked:
-                    logger.debug("Cache clearing verified")
+                    # logger.debug("Cache clearing verified")
+                    pass
                 else:
                     logger.warning("Cache still marked as baked after clearing")
 
@@ -130,19 +131,19 @@ def delete_collider() -> bool:
                            if constants.COLLIDER_OBJECT_NAME.lower() in obj.name.lower()]
                 if colliders:
                     collider = colliders[0]
-                    logger.info(f"Found collider with different name: {collider.name}")
+                    # logger.info(f"Found collider with different name: {collider.name}")
                 else:
-                    logger.info("No COLLIDER object found to delete")
+                    # logger.info("No COLLIDER object found to delete")
                     return True  # Not an error if it doesn't exist
 
             # Verify object is still valid
             if not utils.is_object_valid(collider):
-                logger.info("COLLIDER object already invalid/deleted")
+                # logger.info("COLLIDER object already invalid/deleted")
                 return True
 
             # Delete the collider safely
             if utils.safe_object_delete(collider):
-                logger.info(f"Successfully deleted COLLIDER object: {collider.name}")
+                # logger.info(f"Successfully deleted COLLIDER object: {collider.name}")
                 return True
             else:
                 logger.warning("Failed to delete COLLIDER object")

@@ -36,7 +36,7 @@ def update_earthquake(self, context):
     """Update earthquake settings safely."""
     try:
         eq.update_earthquake()
-        logger.debug("Updated earthquake settings")
+        # logger.debug("Updated earthquake settings")
     except Exception as e:
         logger.warning("Failed to update earthquake settings", e)
 
@@ -46,7 +46,7 @@ def update_earthquake_x(self, context):
     """Update X-axis earthquake settings safely."""
     try:
         eq.update_earthquake()
-        logger.debug("Updated X-axis earthquake settings")
+        # logger.debug("Updated X-axis earthquake settings")
     except Exception as e:
         logger.warning("Failed to update X-axis earthquake settings", e)
 
@@ -56,7 +56,7 @@ def update_earthquake_y(self, context):
     """Update Y-axis earthquake settings safely."""
     try:
         eq.update_earthquake()
-        logger.debug("Updated Y-axis earthquake settings")
+        # logger.debug("Updated Y-axis earthquake settings")
     except Exception as e:
         logger.warning("Failed to update Y-axis earthquake settings", e)
 
@@ -66,7 +66,7 @@ def update_earthquake_z(self, context):
     """Update Z-axis earthquake settings safely."""
     try:
         eq.update_earthquake()
-        logger.debug("Updated Z-axis earthquake settings")
+        # logger.debug("Updated Z-axis earthquake settings")
     except Exception as e:
         logger.warning("Failed to update Z-axis earthquake settings", e)
 
@@ -90,11 +90,12 @@ def update_force_strength(self, context):
             field = safe_object_access(force_obj, "field")
             if field:
                 field.strength = force_strength
-                logger.debug(f"Updated force strength to {force_strength}")
+                # logger.debug(f"Updated force strength to {force_strength}")
             else:
                 logger.warning("Force object has no field property")
         else:
-            logger.debug("No valid force object to update")
+            # logger.debug("No valid force object to update")
+            pass
 
     except Exception as e:
         logger.error("Failed to update force strength", e)
@@ -121,11 +122,12 @@ def update_force_distance(self, context):
                 field.distance_max = force_distance
                 # Also update display size
                 force_obj.empty_display_size = force_distance
-                logger.debug(f"Updated force distance to {force_distance}")
+                # logger.debug(f"Updated force distance to {force_distance}")
             else:
                 logger.warning("Force object has no field property")
         else:
-            logger.debug("No valid force object to update")
+            # logger.debug("No valid force object to update")
+            pass
 
     except Exception as e:
         logger.error("Failed to update force distance", e)
@@ -150,11 +152,12 @@ def update_force_flow(self, context):
             field = safe_object_access(force_obj, "field")
             if field:
                 field.flow = force_flow
-                logger.debug(f"Updated force flow to {force_flow}")
+                # logger.debug(f"Updated force flow to {force_flow}")
             else:
                 logger.warning("Force object has no field property")
         else:
-            logger.debug("No valid force object to update")
+            # logger.debug("No valid force object to update")
+            pass
 
     except Exception as e:
         logger.error("Failed to update force flow", e)
@@ -176,7 +179,7 @@ def update_cloth_presets(self, context):
         # Apply the preset
         preset_values = constants.CLOTH_PRESETS[preset_name]
         cloth_module.set_cloth_parameter(*preset_values)
-        logger.info(f"Applied cloth preset: {preset_name}")
+        # logger.info(f"Applied cloth preset: {preset_name}")
 
         # Update cloth settings if already dropped
         scene = safe_context_access("scene")
@@ -192,7 +195,8 @@ def update_cloth_presets(self, context):
                         updated_count += 1
 
             if updated_count > 0:
-                logger.info(f"Updated {updated_count} active cloth objects with new preset")
+                # logger.info(f"Updated {updated_count} active cloth objects with new preset")
+                pass
 
     except Exception as e:
         logger.error("Failed to update cloth presets", e)
@@ -201,7 +205,7 @@ def update_cloth_presets(self, context):
 def register_properties() -> bool:
     """Register all properties for the addon with improved error handling."""
     try:
-        logger.info("Registering Physics Dropper properties")
+        # logger.info("Registering Physics Dropper properties")
 
         # Rigid body properties with proper validation
         bpy.types.Scene.a_shape = bpy.props.EnumProperty(
@@ -774,7 +778,7 @@ def register_properties() -> bool:
             default=True
         )
 
-        logger.info("Successfully registered all Physics Dropper properties")
+        # logger.info("Successfully registered all Physics Dropper properties")
         return True
 
     except Exception as e:
@@ -785,7 +789,7 @@ def register_properties() -> bool:
 def unregister_properties() -> bool:
     """Unregister all properties with safe cleanup."""
     try:
-        logger.info("Unregistering Physics Dropper properties")
+        # logger.info("Unregistering Physics Dropper properties")
 
         # Complete list of all properties to unregister
         properties_to_remove = [
@@ -827,11 +831,11 @@ def unregister_properties() -> bool:
                 if hasattr(bpy.types.Scene, prop_name):
                     delattr(bpy.types.Scene, prop_name)
                     removed_count += 1
-                    logger.debug(f"Unregistered property: {prop_name}")
+                    # logger.debug(f"Unregistered property: {prop_name}")
             except Exception as e:
                 logger.warning(f"Failed to unregister property {prop_name}", e)
 
-        logger.info(f"Unregistered {removed_count}/{len(properties_to_remove)} properties")
+        # logger.info(f"Unregistered {removed_count}/{len(properties_to_remove)} properties")
         return True
 
     except Exception as e:
