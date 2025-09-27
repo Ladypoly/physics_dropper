@@ -516,8 +516,36 @@ class PD_OT_ForceMode(bpy.types.Operator):
                     view_vector = view3d_utils.region_2d_to_vector_3d(region, region_3d, coord)
                     ray_origin = view3d_utils.region_2d_to_origin_3d(region, region_3d, coord)
 
-                    # Move force object like a grabbed object at fixed distance from camera
-                    new_location = ray_origin + view_vector * self.view_distance
+                    # Check if Ctrl is held for surface snapping
+                    if event.ctrl:
+                        # Perform raycast to snap to surface
+                        scene = safe_context_access("scene")
+                        if scene:
+                            depsgraph = safe_context_access("evaluated_depsgraph_get")()
+                            if depsgraph:
+                                # Cast ray and get hit location
+                                hit, location, normal, index, obj, matrix = scene.ray_cast(
+                                    depsgraph, ray_origin, view_vector
+                                )
+
+                                if hit:
+                                    # Snap to surface with slight offset along normal
+                                    new_location = location + normal * 0.1
+                                    # Update view distance for consistent behavior
+                                    self.view_distance = (new_location - ray_origin).length
+                                else:
+                                    # No hit - use default distance behavior
+                                    new_location = ray_origin + view_vector * self.view_distance
+                            else:
+                                # Fallback if no depsgraph available
+                                new_location = ray_origin + view_vector * self.view_distance
+                        else:
+                            # Fallback if no scene available
+                            new_location = ray_origin + view_vector * self.view_distance
+                    else:
+                        # Normal behavior - move force object like a grabbed object at fixed distance from camera
+                        new_location = ray_origin + view_vector * self.view_distance
+
                     self.force_object.location = new_location
 
             elif event.type == 'WHEELUPMOUSE':

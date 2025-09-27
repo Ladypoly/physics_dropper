@@ -296,6 +296,14 @@ class PD_PT_PhysicsDropper(bpy.types.Panel):
             else:
                 col.operator("pd.simple_force", text="Add Simple Force", icon='FORCE_FORCE')
 
+                # Info about force mode controls
+                info_box = col.box()
+                info_box.scale_y = 0.8
+                info_box.label(text="Force Mode Controls:", icon='INFO')
+                info_box.label(text="• Press F to create interactive force")
+                info_box.label(text="• Mouse wheel to scale force distance")
+                info_box.label(text="• Hold Ctrl to snap to surface")
+
             # Force properties
             try:
                 row = col.row(align=True)
