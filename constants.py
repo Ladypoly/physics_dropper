@@ -130,7 +130,6 @@ ERROR_MESSAGES = {
     'NO_MESH_SELECTED': "No mesh objects selected. Please select at least one mesh object.",
     'NO_RIGIDBODY_WORLD': "Failed to create rigidbody world. Check Blender version compatibility.",
     'FORCE_OBJECT_NOT_FOUND': "Force object not found or already deleted.",
-    'BAKING_FAILED': "Physics baking failed. Check console for details.",
     'OBJECT_DELETED': "Object was deleted during operation.",
     'INVALID_CONTEXT': "Invalid context for this operation.",
     'PROPERTY_UPDATE_FAILED': "Failed to update property. Object may have been deleted.",

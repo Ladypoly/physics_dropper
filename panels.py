@@ -236,19 +236,20 @@ class PD_PT_PhysicsDropper(bpy.types.Panel):
             col.alert = True
             col.operator("pd.apply", text="Apply", icon='CHECKMARK')
 
-            # Bake options
-            split = col.split(factor=0.5)
-            split.alert = False
-            split.scale_y = 0.5
-            split.operator("pd.bake_sim_cache", text="Bake to Cache")
-
             # Bake to keyframes (only for rigidbody)
             if is_rigid:
-                split.operator("pd.bake_sim_keyframes", text="Bake to Keyframes", icon='KEYFRAME')
+                col = layout.column(align=True)
+                col.scale_y = 2.0
+                col.operator("pd.bake_sim_keyframes", text="Bake to Keyframes", icon='KEYFRAME')
+
+            # Exit drop mode button
+            col = layout.column(align=True)
+            col.scale_y = 1.0
+            col.operator("pd.exit_physics_mode", text="Exit Drop Mode", icon='CANCEL')
 
             # Additional simulation controls
             col = layout.column()
-            col.scale_y = 2.0
+            col.scale_y = 1.5
 
             # Pause/play button
             screen = safe_context_access("screen")
@@ -268,7 +269,7 @@ class PD_PT_PhysicsDropper(bpy.types.Panel):
             # Force properties
             try:
                 row = col.row(align=True)
-                row.scale_y = 0.5
+                row.scale_y = 1.0
                 row.prop(scene, "forcestrength", text="Strength")
                 row.prop(scene, "forceflow", text="Flow")
                 row.prop(scene, "forcedistance", text="Distance")
@@ -312,7 +313,7 @@ class PD_PT_PhysicsDropper(bpy.types.Panel):
         """Draw earthquake control properties."""
         try:
             row = col.row(align=True)
-            row.scale_y = 0.5
+            row.scale_y = 1.0
             row.prop(scene, "earthquake", text="Earthquake")
 
             # Earthquake axis controls with icons

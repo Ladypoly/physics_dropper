@@ -66,31 +66,6 @@ def rb_bake_from_current_cache(scene=None):
             pass
 
 
-@log_performance("bake_rigidbody_simulation")
-def bake_rigidbody_simulation(start_frame: int, end_frame: int) -> bool:
-    """
-    Bake rigid body simulation from current cache state.
-
-    Args:
-        start_frame: Starting frame for baking (unused - preserves natural extent)
-        end_frame: Ending frame for baking (unused - preserves natural extent)
-
-    Returns:
-        bool: True if baking succeeded, False otherwise
-    """
-    try:
-        with SafeOperation("bake_rigidbody_from_cache") as op:
-            rb_bake_from_current_cache()
-            logger.info("Successfully baked from current cache")
-            op.success = True
-            return True
-
-    except RuntimeError as e:
-        logger.error(f"Runtime error in bake_rigidbody_simulation: {e}")
-        return False
-    except Exception as e:
-        logger.error(f"Unexpected error in bake_rigidbody_simulation: {e}")
-        return False
 
 @log_errors
 def clear_rigidbody_bake() -> bool:
@@ -215,17 +190,3 @@ def validate_baking_prerequisites() -> bool:
         return False
 
 
-@log_performance("batch_bake_objects")
-def batch_bake_objects(objects: list, start_frame: int, end_frame: int) -> bool:
-    """Bake physics for rigid body world (selection only used for tooling)."""
-    # Do NOT bake per batch. RB World is global.
-    # If you need selection for your own bookkeeping, fine, but bake once.
-    try:
-        total_objects = len(objects) if objects else 0
-        logger.info(f"Preparing rigid body bake for {total_objects} objects (selection only used for your tooling)")
-        ok = bake_rigidbody_simulation(start_frame, end_frame)  # single call
-        logger.info("Rigid body world baked once")
-        return ok
-    except Exception as e:
-        logger.error("Error in batch bake operation", e)
-        return False

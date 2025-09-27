@@ -247,6 +247,41 @@ class PD_OT_Reset(bpy.types.Operator):
             return {"CANCELLED"}
 
 
+class PD_OT_ExitPhysicsMode(bpy.types.Operator):
+    """Exit physics dropper mode but keep simulation running"""
+    bl_idname = "pd.exit_physics_mode"
+    bl_label = "Exit Physics Mode"
+    bl_description = "Exit physics dropper mode but keep the simulation running"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        scene = safe_context_access("scene")
+        return scene and getattr(scene, 'dropped', False)
+
+    def execute(self, context):
+        try:
+            with SafeOperation("exit_physics_mode") as op:
+                scene = safe_context_access("scene")
+                if not scene:
+                    self.report({'ERROR'}, constants.ERROR_MESSAGES['INVALID_CONTEXT'])
+                    return {"CANCELLED"}
+
+                # Simply mark as not dropped, keeping all physics active
+                scene.dropped = False
+
+                # Mark operation as successful
+                op.success = True
+                logger.info("Exited physics dropper mode, simulation continues")
+                self.report({'INFO'}, "Exited physics mode, simulation continues")
+                return {"FINISHED"}
+
+        except Exception as e:
+            logger.error("Unexpected error in exit physics mode operation", e)
+            self.report({'ERROR'}, f"Exit physics mode failed: {str(e)}")
+            return {"CANCELLED"}
+
+
 ###############################################################################
 # Force Field Operators
 ###############################################################################
@@ -341,94 +376,6 @@ class PD_OT_SimpleForceRemove(bpy.types.Operator):
 # Baking Operators
 ###############################################################################
 
-class PD_OT_BakeSimCache(bpy.types.Operator):
-    """Bake physics to cache"""
-    bl_idname = "pd.bake_sim_cache"
-    bl_label = "Bake to Cache"
-    bl_description = "Bake current physics simulation state to cache (preserves earthquake effects)"
-    bl_options = {"REGISTER", "UNDO"}
-
-    @classmethod
-    def poll(cls, context):
-        scene = safe_context_access("scene")
-        screen = safe_context_access("screen")
-
-        # Only allow baking when simulation is dropped AND animation is paused
-        simulation_active = scene and getattr(scene, 'dropped', False)
-        animation_paused = not (screen and getattr(screen, 'is_animation_playing', False))
-
-        return simulation_active and animation_paused
-
-    def execute(self, context):
-        try:
-            with SafeOperation("bake_simulation_cache") as op:
-                from . import bake_utils
-
-                scene = safe_context_access("scene")
-                if not scene:
-                    self.report({'ERROR'}, constants.ERROR_MESSAGES['INVALID_CONTEXT'])
-                    return {"CANCELLED"}
-
-                start_frame = getattr(scene, 'w_startframe', constants.DEFAULT_FRAME_START)
-                end_frame = getattr(scene, 'w_endframe', constants.DEFAULT_FRAME_END)
-
-                # Bake the rigid body world cache - no other interference
-                success = bake_utils.bake_rigidbody_simulation(start_frame, end_frame)
-
-                if success:
-                    # Reset to default state like apply/reset does
-                    # Stop animation if playing
-                    screen = safe_context_access("screen")
-                    if screen and getattr(screen, 'is_animation_playing', False):
-                        bpy.ops.screen.animation_play()
-                        logger.debug("Stopped animation playback after cache baking")
-
-                    # Set frame to start
-                    scene.frame_current = constants.DEFAULT_FRAME_START
-                    logger.debug("Reset frame to start position after cache baking")
-
-                    # Apply rigidbody to reset to default state (cleans up physics)
-                    if rb.apply_rigid():
-                        logger.info("Applied rigidbody simulation after cache baking - reset to default state")
-                    else:
-                        logger.warning("Issues occurred while resetting to default state after cache baking")
-
-                    # Mark operation as successful
-                    op.success = True
-                    self.report({'INFO'}, constants.SUCCESS_MESSAGES['BAKING_COMPLETE'])
-                    return {"FINISHED"}
-
-                self.report({'ERROR'}, constants.ERROR_MESSAGES['BAKING_FAILED'])
-                return {"CANCELLED"}
-
-        except Exception as e:
-            logger.error("Unexpected error during baking", e)
-            self.report({'ERROR'}, f"Baking failed: {str(e)}")
-            return {"CANCELLED"}
-
-    def _cleanup_collider_object(self):
-        """Clean up the COLLIDER object after baking."""
-        try:
-            utils.safe_deselect_all()
-
-            # Find and delete the COLLIDER object
-            scene = safe_context_access("scene")
-            if scene:
-                collider = scene.objects.get(constants.COLLIDER_OBJECT_NAME)
-                if collider and utils.is_object_valid(collider):
-                    if utils.safe_object_delete(collider):
-                        logger.debug("COLLIDER object deleted successfully")
-                    else:
-                        logger.warning("Failed to delete COLLIDER object")
-                else:
-                    # Also check for passive rigidbody objects
-                    passive_obj = utils.state.get_rigidbody("passive")
-                    if passive_obj and utils.is_object_valid(passive_obj):
-                        if utils.safe_object_delete(passive_obj):
-                            utils.state.set_rigidbody("passive", None)
-                            logger.debug("Passive rigidbody object deleted")
-        except Exception as e:
-            logger.warning("Error during collider cleanup", e)
 
 
 class PD_OT_BakeSimKeyframes(bpy.types.Operator):
@@ -460,7 +407,10 @@ class PD_OT_BakeSimKeyframes(bpy.types.Operator):
                     return {"CANCELLED"}
 
                 start_frame = getattr(scene, 'w_startframe', constants.DEFAULT_FRAME_START)
-                end_frame = getattr(scene, 'w_endframe', constants.DEFAULT_FRAME_END)
+                current_frame = scene.frame_current
+
+                # Use current frame as end frame for baking
+                end_frame = current_frame
 
                 # Check if animation is currently playing
                 screen = safe_context_access("screen")
@@ -468,10 +418,16 @@ class PD_OT_BakeSimKeyframes(bpy.types.Operator):
                     self.report({'ERROR'}, "Cannot bake while animation is playing. Please pause the timeline first.")
                     return {"CANCELLED"}
 
-                logger.info(f"Baking simulation to keyframes from frame {start_frame} to {end_frame}")
+                # Validate frame range
+                if end_frame < start_frame:
+                    self.report({'ERROR'}, f"Current frame ({current_frame}) is before start frame ({start_frame}). Please advance the timeline.")
+                    return {"CANCELLED"}
+
+                logger.info(f"Baking simulation to keyframes from frame {start_frame} to {end_frame} (current frame)")
 
                 # Step 1: First bake to cache (this preserves the current simulation state)
                 try:
+                    from . import bake_utils
                     bake_utils.rb_bake_from_current_cache()
                     logger.info("Successfully baked current simulation to cache")
                 except Exception as e:
@@ -506,6 +462,7 @@ class PD_OT_BakeSimKeyframes(bpy.types.Operator):
 
                     # Clear the baked cache since we've baked to keyframes
                     try:
+                        from . import bake_utils
                         bake_utils.clear_rigidbody_bake()
                         logger.info("Cleared baked cache after keyframe baking")
                     except Exception as e:
@@ -644,9 +601,9 @@ operators = [
     PD_OT_Drop,
     PD_OT_Apply,
     PD_OT_Reset,
+    PD_OT_ExitPhysicsMode,
     PD_OT_SimpleForce,
     PD_OT_SimpleForceRemove,
-    PD_OT_BakeSimCache,
     PD_OT_BakeSimKeyframes,
     PD_OT_PauseSim,
     PD_OT_Donate,

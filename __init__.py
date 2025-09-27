@@ -8,7 +8,7 @@ bl_info = {
     "description": "Easy rigidbody and cloth physics simulation setup with enhanced stability",
     "author": "Elin",
     "version": (1, 3, 0),
-    "blender": (2, 93, 5),
+    "blender": (4, 5, 0),
     "location": "Tool",
     "category": "3D View",
     "doc_url": "",

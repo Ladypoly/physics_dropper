@@ -1,24 +1,10 @@
 # Physics Dropper
 
-A Blender addon for easy setup of rigid body and cloth physics simulations with advanced baking capabilities.
+A Blender addon for easy setup of rigid body and cloth physics simulations with streamlined baking capabilities.
 
 ## Overview
 
 Physics Dropper is a Blender addon that simplifies the process of setting up physics simulations in your 3D scenes. Whether you're working with rigid body dynamics or cloth simulations, this addon provides an intuitive interface and streamlined workflow for creating realistic physics interactions.
-
-## 🚨 CRITICAL BAKING ISSUE (UNRESOLVED)
-
-**Current Problem**: Cache baking (`bpy.ops.ptcache.bake_from_cache()`) is failing with several issues:
-1. **Object at world zero**: First selected object gets stuck at (0,0,0) world origin
-2. **Cache corruption**: Objects reset to start position on playback and fall without collision
-3. **Context requirements**: The operator needs proper UI context (Properties/Timeline/3D View visible)
-
-**Working Solution**: Direct call to `bpy.ops.ptcache.bake_from_cache()` with proper UI context works fine when called manually, but fails when integrated into the addon workflow.
-
-**Files Involved**:
-- `bake_utils.py:12-81` - Main baking function (currently broken)
-- `operators.py:344-450` - Cache baking operator
-- `utils.py:206-251` - Post-bake cleanup (disabled for cache baking)
 
 ## Features
 
@@ -42,11 +28,9 @@ Physics Dropper is a Blender addon that simplifies the process of setting up phy
 - **Pressure Effects**: Optional pressure simulation for inflatable objects
 
 ### ⚡ Workflow Tools
-- **Cache Baking**: Preserve current physics simulation state with external influences (earthquake effects, forces)
-  - ⚠️ **BROKEN**: Current implementation has object positioning and cache corruption issues
-  - ✅ **Manual Workaround**: Use standalone `bpy.ops.ptcache.bake_from_cache()` function
-- **Keyframe Baking**: Bake physics simulations to keyframes for performance
-- **Armature Integration**: Bake armature animations alongside physics
+- **Keyframe Baking**: Bake physics simulations to keyframes up to the current timeline position
+  - Smart baking that only processes frames up to where you pause the simulation
+  - Preserves earthquake effects and external forces in the baked animation
 - **Keyboard Shortcuts**: Customizable hotkeys for quick access to common operations
 - **Visual Feedback**: Clear UI panels with intuitive controls
 
@@ -114,8 +98,7 @@ physics_dropper/
 ├── rigidbody.py        # Rigid body physics functions and world setup
 ├── cloth.py            # Cloth simulation functions and material presets
 ├── earthquake.py       # Earthquake effect system using F-curve noise modifiers
-├── bake_utils.py       # Physics cache baking utilities (⚠️ BROKEN)
-└── armature_bake.py    # Armature-specific baking functions
+└── bake_utils.py       # Physics keyframe baking utilities
 ```
 
 ### Assets
@@ -139,8 +122,8 @@ Thread-safe state management for physics objects:
 #### SafeOperation (logger.py)
 Context manager for safe Blender operations with error handling and performance tracking.
 
-#### Baking System (bake_utils.py) ⚠️ BROKEN
-- `bake_rigidbody_simulation()`: Main cache baking function
+#### Baking System (bake_utils.py)
+- `rb_bake_from_current_cache()`: Cache preparation for keyframe baking
 - `clear_rigidbody_bake()`: Cache clearing functionality
 - `delete_collider()`: Cleanup collider objects after baking
 
@@ -150,69 +133,32 @@ This addon was created by Elin. For bug reports, feature requests, or contributi
 
 ## License
 
-Physics Dropper addon for Blender - Version 1.2.0
+Physics Dropper addon for Blender - Version 1.3.0
 
 ## Recent Changes & Development Notes
 
-### Cache Baking Investigation (2024)
-**Problem**: Cache baking workflow is fundamentally broken with multiple issues:
+### Latest Updates (2024)
 
-1. **Transform Corruption**: Objects getting reset to world origin (0,0,0)
-2. **Cache State Issues**: Baked objects reset to start position and lose collision
-3. **Context Problems**: `bpy.ops.ptcache.bake_from_cache()` requires specific UI context
+#### Baking System Improvements
+- **Removed Cache Baking**: Eliminated the problematic "Bake to Cache" functionality that was causing object positioning and cache corruption issues
+- **Enhanced Keyframe Baking**: Improved the "Bake to Keyframes" feature to only bake up to the current timeline position
+  - Now intelligently stops at the current frame instead of processing the entire timeline
+  - More efficient workflow: pause simulation at desired frame, then bake
+  - Preserves earthquake effects and external forces in baked keyframes
 
-**Root Causes Identified**:
-- Post-bake cleanup (`utils.py:post_bake()`) was destroying physics setup needed for cache playback
-- Object selection/manipulation during baking was corrupting transforms
-- Timeline/frame manipulation was interfering with natural cache extent
+#### UI/UX Improvements
+- **Better Button Sizing**: Improved visual hierarchy of simulation control buttons
+  - Apply and Bake to Keyframes buttons are now prominently sized
+  - Secondary controls (Pause/Play) are appropriately smaller
+  - Force properties and earthquake controls are properly sized for readability
 
-**Working Manual Solution**:
-```python
-import bpy
-
-def rb_bake_from_current_cache(scene=None):
-    scene = scene or bpy.context.scene
-    if not scene.rigidbody_world:
-        raise RuntimeError("No Rigid Body World on the scene")
-
-    pc = scene.rigidbody_world.point_cache
-
-    def find_ui_override():
-        wm = bpy.context.window_manager
-        for win in wm.windows:
-            scr = win.screen
-            for area in scr.areas:
-                if area.type in {'PROPERTIES', 'TIMELINE', 'VIEW_3D'}:
-                    for region in area.regions:
-                        if region.type == 'WINDOW':
-                            return {
-                                'window': win, 'screen': scr, 'area': area,
-                                'region': region, 'scene': scene, 'point_cache': pc
-                            }
-        return None
-
-    ctx = find_ui_override()
-    if not ctx:
-        raise RuntimeError("No suitable UI context found")
-
-    with bpy.context.temp_override(**ctx):
-        bpy.ops.ptcache.bake_from_cache()
-
-rb_bake_from_current_cache()
-```
-
-**Key Principle**: Cache baking should preserve everything exactly as simulated - positions, physics setup, world settings, and natural simulation extent.
-
-### Failed Approaches Tried
-1. Complex context override with object selection
-2. Transform preservation/restoration after baking
-3. Direct API calls (`point_cache.bake()` - doesn't exist)
-4. Frame range manipulation (interferes with natural extent)
-
-**Next Developer**: The issue persists despite implementing the exact working function. Something in the addon workflow is still interfering with the baking process.
+#### Code Quality
+- **Cleaner Architecture**: Removed unused and problematic code paths
+- **Better Error Handling**: Enhanced validation for frame ranges and simulation states
+- **Improved Logging**: More descriptive messages for baking operations
 
 ## Version History
 
-- **v1.2.0**: Current version with enhanced cloth simulation and UI improvements
-- Compatible with Blender 2.93.5+
-- **Cache Baking**: Currently broken, needs investigation
+- **v1.3.0**: Current version with streamlined baking system and improved UI
+- **v1.2.0**: Previous version with enhanced cloth simulation
+- Compatible with Blender 2.93.5+ and fully tested with Blender 4.5+
