@@ -372,6 +372,197 @@ class PD_OT_SimpleForceRemove(bpy.types.Operator):
             return {"FINISHED"}  # Still consider it successful
 
 
+class PD_OT_ForceMode(bpy.types.Operator):
+    """Modal force field operator - move force with mouse"""
+    bl_idname = "pd.force_mode"
+    bl_label = "Force Mode"
+    bl_description = "Interactive force field mode - move with mouse, scroll to adjust distance"
+    bl_options = {"REGISTER", "UNDO", "BLOCKING"}
+
+    force_object = None
+    initial_mouse_x = 0
+    initial_mouse_y = 0
+    initial_distance = 1.0
+    initial_force_location = None
+    view_distance = 5.0
+
+    @classmethod
+    def poll(cls, context):
+        scene = safe_context_access("scene")
+        return scene and getattr(scene, 'dropped', False)
+
+    def invoke(self, context, event):
+        """Start force mode"""
+        try:
+            # Store initial mouse position
+            self.initial_mouse_x = event.mouse_x
+            self.initial_mouse_y = event.mouse_y
+
+            # Create force field at cursor location using raycast
+            scene = safe_context_access("scene")
+            if not scene:
+                self.report({'ERROR'}, constants.ERROR_MESSAGES['INVALID_CONTEXT'])
+                return {"CANCELLED"}
+
+            # Get 3D location from mouse position
+            region = safe_context_access("region")
+            region_3d = safe_context_access("region_data")
+
+            if not (region and region_3d):
+                self.report({'ERROR'}, "Cannot access 3D viewport region")
+                return {"CANCELLED"}
+
+            # Convert mouse coordinates to 3D space and perform raycast for initial placement only
+            from bpy_extras import view3d_utils
+            from mathutils import Vector
+
+            coord = (event.mouse_region_x, event.mouse_region_y)
+
+            # Get view direction and origin
+            view_vector = view3d_utils.region_2d_to_vector_3d(region, region_3d, coord)
+            ray_origin = view3d_utils.region_2d_to_origin_3d(region, region_3d, coord)
+
+            # Perform raycast to find surface hit for initial placement
+            depsgraph = safe_context_access("evaluated_depsgraph_get")()
+            if depsgraph:
+                # Cast ray and get hit location
+                hit, location, normal, index, obj, matrix = scene.ray_cast(
+                    depsgraph, ray_origin, view_vector
+                )
+
+                if not hit:
+                    # No hit - place at default distance from camera
+                    location = ray_origin + view_vector * 5.0
+                    self.view_distance = 5.0
+                else:
+                    # Offset slightly from surface along normal to avoid z-fighting
+                    location = location + normal * 0.1
+                    # Calculate distance from camera for grab-like behavior
+                    self.view_distance = (location - ray_origin).length
+            else:
+                # Fallback if no depsgraph available
+                location = ray_origin + view_vector * 5.0
+                self.view_distance = 5.0
+
+            # Store initial force location for grab-like movement
+            self.initial_force_location = location.copy()
+
+            # Add force field
+            bpy.ops.object.effector_add(
+                type='FORCE',
+                radius=1.0,
+                enter_editmode=False,
+                align='WORLD',
+                location=location
+            )
+
+            # Get the newly created force object
+            self.force_object = safe_context_access("active_object")
+            if not self.force_object:
+                self.report({'ERROR'}, "Failed to create force field object")
+                return {"CANCELLED"}
+
+            # Configure force field
+            utils.state.set_physics_dropper("force_object", self.force_object)
+
+            # Set display properties
+            self.force_object.empty_display_type = 'SPHERE'
+            self.initial_distance = getattr(scene, 'forcedistance', constants.FORCE_DISTANCE_DEFAULT)
+            self.force_object.empty_display_size = self.initial_distance
+
+            # Set force field properties safely
+            if hasattr(self.force_object, 'field'):
+                self.force_object.field.strength = getattr(scene, 'forcestrength', constants.FORCE_STRENGTH_DEFAULT)
+                self.force_object.field.use_max_distance = True
+                self.force_object.field.distance_max = self.initial_distance
+                self.force_object.field.flow = getattr(scene, 'forceflow', constants.FORCE_FLOW_DEFAULT)
+
+            # Add modal handler
+            context.window_manager.modal_handler_add(self)
+
+            # Set cursor to indicate mode
+            context.window.cursor_modal_set('EYEDROPPER')
+
+            return {"RUNNING_MODAL"}
+
+        except Exception as e:
+            logger.error("Error starting force mode", e)
+            self.report({'ERROR'}, f"Failed to start force mode: {str(e)}")
+            return {"CANCELLED"}
+
+    def modal(self, context, event):
+        """Handle modal events"""
+        try:
+            # Check if force object still exists
+            if not self.force_object or not utils.is_object_valid(self.force_object):
+                context.window.cursor_modal_restore()
+                return {"CANCELLED"}
+
+            if event.type == 'MOUSEMOVE':
+                # Update force object location like a grabbed object (maintain distance from camera)
+                region = safe_context_access("region")
+                region_3d = safe_context_access("region_data")
+
+                if region and region_3d:
+                    from bpy_extras import view3d_utils
+
+                    coord = (event.mouse_region_x, event.mouse_region_y)
+
+                    # Get view direction and origin
+                    view_vector = view3d_utils.region_2d_to_vector_3d(region, region_3d, coord)
+                    ray_origin = view3d_utils.region_2d_to_origin_3d(region, region_3d, coord)
+
+                    # Move force object like a grabbed object at fixed distance from camera
+                    new_location = ray_origin + view_vector * self.view_distance
+                    self.force_object.location = new_location
+
+            elif event.type == 'WHEELUPMOUSE':
+                # Increase force distance
+                scene = safe_context_access("scene")
+                if scene:
+                    current_distance = getattr(scene, 'forcedistance', constants.FORCE_DISTANCE_DEFAULT)
+                    new_distance = min(current_distance * 1.1, constants.FORCE_DISTANCE_MAX)
+                    scene.forcedistance = new_distance
+
+                    # Update force object properties
+                    self.force_object.empty_display_size = new_distance
+                    if hasattr(self.force_object, 'field'):
+                        self.force_object.field.distance_max = new_distance
+
+            elif event.type == 'WHEELDOWNMOUSE':
+                # Decrease force distance
+                scene = safe_context_access("scene")
+                if scene:
+                    current_distance = getattr(scene, 'forcedistance', constants.FORCE_DISTANCE_DEFAULT)
+                    new_distance = max(current_distance * 0.9, constants.FORCE_DISTANCE_MIN)
+                    scene.forcedistance = new_distance
+
+                    # Update force object properties
+                    self.force_object.empty_display_size = new_distance
+                    if hasattr(self.force_object, 'field'):
+                        self.force_object.field.distance_max = new_distance
+
+            elif event.type in {'F', 'RIGHTMOUSE', 'ESC'}:
+                # Exit force mode and remove force field
+                if event.value == 'PRESS':
+                    context.window.cursor_modal_restore()
+                    if self.force_object and utils.is_object_valid(self.force_object):
+                        utils.safe_object_delete(self.force_object)
+                        utils.state.set_physics_dropper("force_object", None)
+                    return {"FINISHED"}
+
+            return {"RUNNING_MODAL"}
+
+        except Exception as e:
+            logger.error("Error in force mode modal", e)
+            context.window.cursor_modal_restore()
+            return {"CANCELLED"}
+
+    def execute(self, context):
+        """Direct execution (fallback)"""
+        return self.invoke(context, None)
+
+
 ###############################################################################
 # Baking Operators
 ###############################################################################
@@ -604,6 +795,7 @@ operators = [
     PD_OT_ExitPhysicsMode,
     PD_OT_SimpleForce,
     PD_OT_SimpleForceRemove,
+    PD_OT_ForceMode,
     PD_OT_BakeSimKeyframes,
     PD_OT_PauseSim,
     PD_OT_Donate,
@@ -657,11 +849,11 @@ def register_keymaps() -> bool:
         except Exception as e:
             logger.warning("Failed to register 'drop' keymap", e)
 
-        # Toggle force (F)
+        # Force Mode (F)
         try:
             km = kc.keymaps.new(name="3D View", space_type="VIEW_3D")
             kmi = km.keymap_items.new(
-                "pd.simple_force",
+                "pd.force_mode",
                 type=constants.DEFAULT_KEYMAPS['force']['type'],
                 value="PRESS",
                 shift=constants.DEFAULT_KEYMAPS['force']['shift'],
@@ -673,23 +865,7 @@ def register_keymaps() -> bool:
         except Exception as e:
             logger.warning("Failed to register 'force' keymap", e)
 
-        # Remove force (F release)
-        try:
-            km = kc.keymaps.new(name="3D View", space_type="VIEW_3D")
-            kmi = km.keymap_items.new(
-                "pd.simple_force_remove",
-                type=constants.DEFAULT_KEYMAPS['force_remove']['type'],
-                value=constants.DEFAULT_KEYMAPS['force_remove'].get('value', 'RELEASE'),
-                shift=constants.DEFAULT_KEYMAPS['force_remove']['shift'],
-                ctrl=constants.DEFAULT_KEYMAPS['force_remove']['ctrl'],
-                alt=constants.DEFAULT_KEYMAPS['force_remove']['alt']
-            )
-            utils.addon_keymaps['force_remove'] = (km, kmi)
-            registered_count += 1
-        except Exception as e:
-            logger.warning("Failed to register 'force_remove' keymap", e)
-
-        logger.info(f"Registered {registered_count}/4 keymaps successfully")
+        logger.info(f"Registered {registered_count}/3 keymaps successfully")
         return registered_count > 0
 
     except Exception as e:

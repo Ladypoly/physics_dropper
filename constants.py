@@ -39,7 +39,7 @@ DAMPING_DEFAULT = 0.04
 # Force field constants
 FORCE_STRENGTH_MIN = -1000.0
 FORCE_STRENGTH_MAX = 1000.0
-FORCE_STRENGTH_DEFAULT = 1.0
+FORCE_STRENGTH_DEFAULT = -1000.0
 
 FORCE_DISTANCE_MIN = 0.0
 FORCE_DISTANCE_MAX = 100.0
@@ -168,6 +168,5 @@ ASSETS_DIR_NAME = "assets"
 DEFAULT_KEYMAPS = {
     'drop': {'type': 'V', 'shift': False, 'ctrl': False, 'alt': False},
     'apply': {'type': 'V', 'shift': True, 'ctrl': False, 'alt': False},
-    'force': {'type': 'F', 'shift': False, 'ctrl': False, 'alt': False},
-    'force_remove': {'type': 'F', 'value': 'RELEASE', 'shift': False, 'ctrl': False, 'alt': False}
+    'force': {'type': 'F', 'shift': False, 'ctrl': False, 'alt': False}
 }
