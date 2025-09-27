@@ -85,6 +85,7 @@ def register():
             bpy.app.handlers.undo_pre.append(undo_pre_handler)
             logger.logger.debug("Registered undo handler")
 
+
         # Validate scene state
         if not utils.validate_scene_state():
             logger.logger.warning("Scene state validation failed")
@@ -104,6 +105,7 @@ def unregister():
     """Unregister the addon with safe cleanup."""
     try:
         logger.logger.info(f"Unregistering {constants.ADDON_NAME}")
+
 
         # Unregister handlers safely
         if undo_pre_handler in bpy.app.handlers.undo_pre:

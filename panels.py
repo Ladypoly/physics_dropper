@@ -98,37 +98,67 @@ def safe_poll_not_dropped_cloth(context) -> bool:
 # Addon Preferences
 ###############################################################################
 
+def get_hotkey_entry_item(km, kmi_name):
+    """Get keymap item by operator name"""
+    for i, km_item in enumerate(km.keymap_items):
+        if km.keymap_items.keys()[i] == kmi_name:
+            return km_item
+    return None
+
 class PD_AddonPreferences(bpy.types.AddonPreferences):
     """Addon preferences for keybinding configuration."""
     bl_idname = 'physics_dropper'
 
     def draw(self, context):
-        """Draw the preferences panel with safe keymap access."""
+        """Draw the preferences panel with HardOps-style keymap interface."""
         try:
+            import rna_keymap_ui
+
             layout = self.layout
             col = layout.column()
-            col.scale_x = 1.25
 
-            # Define keymap configurations
-            keymap_configs = [
-                ("drop", "Drop Shortcut"),
-                ("apply", "Apply Shortcut"),
-                ("force", "Toggle Force")
+            col.label(text="Keyboard Shortcuts:", icon='KEYINGSET')
+            col.separator()
+
+            # Get user keyconfig for persistent changes
+            wm = bpy.context.window_manager
+            kc = wm.keyconfigs.user
+
+            # Define our keymaps to show
+            keymap_items = [
+                ("3D View", "pd.drop", "Drop Objects", 'RIGID_BODY'),
+                ("3D View", "pd.apply", "Apply Physics", 'CHECKMARK'),
+                ("3D View", "pd.force_mode", "Force Mode", 'FORCE_FORCE')
             ]
 
-            for keymap_name, display_name in keymap_configs:
+            for km_name, operator_name, label, icon in keymap_items:
                 try:
-                    if safe_keymap_access(keymap_name):
-                        _, kmi = get_keymap_item(keymap_name)
+                    # Create a box for each keymap item
+                    box = col.box()
+                    row = box.row()
+                    row.label(text=label, icon=icon)
+
+                    # Get the keymap
+                    km = kc.keymaps.get(km_name)
+                    if km:
+                        kmi = get_hotkey_entry_item(km, operator_name)
                         if kmi:
-                            col.prop(kmi, "type", text=display_name, full_event=True)
+                            # Use Blender's built-in keymap UI - this automatically saves changes!
+                            box.context_pointer_set("keymap", km)
+                            rna_keymap_ui.draw_kmi([], kc, km, kmi, box, 0)
                         else:
-                            col.label(text=f"Invalid keymap item for {display_name}!", icon="ERROR")
+                            box.label(text="No hotkey entry found")
+                            box.label(text="Enable addon to register keymaps")
                     else:
-                        col.label(text=f"Couldn't find keymap for {display_name}!", icon="ERROR")
+                        box.label(text=f"Keymap '{km_name}' not found")
+
                 except Exception as e:
-                    log.warning(f"Failed to draw keymap {keymap_name}: {e}")
-                    col.label(text=f"Error accessing {display_name}!", icon="ERROR")
+                    log.warning(f"Failed to draw keymap for {label}: {e}")
+                    box = col.box()
+                    box.label(text=f"Error loading {label}", icon="ERROR")
+
+            col.separator()
+            col.label(text="Changes are saved automatically with user preferences", icon='INFO')
 
         except Exception as e:
             log.error(f"Failed to draw addon preferences: {e}")
