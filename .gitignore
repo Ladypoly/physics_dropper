@@ -1,0 +1,6 @@
+
+__pycache__/
+.claude/
+
+claude-session-raw.json
+claude-session.log
