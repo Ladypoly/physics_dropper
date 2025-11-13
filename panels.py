@@ -106,8 +106,8 @@ def get_hotkey_entry_item(km, kmi_name):
     return None
 
 class PD_AddonPreferences(bpy.types.AddonPreferences):
-    """Addon preferences for keybinding configuration."""
-    bl_idname = 'physics_dropper'
+    """Extension preferences for keybinding configuration."""
+    bl_idname = __package__
 
     def draw(self, context):
         """Draw the preferences panel with HardOps-style keymap interface."""

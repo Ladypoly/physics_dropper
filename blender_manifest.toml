@@ -1,0 +1,39 @@
+schema_version = "1.0.0"
+
+# Extension identifier - keep consistent with your addon name
+id = "physics_dropper"
+version = "1.3.0"
+name = "Physics Dropper"
+tagline = "Easy rigidbody and cloth physics simulation setup with enhanced stability"
+maintainer = "Elin <noreply@example.com>"
+type = "add-on"
+
+# Blender version support
+blender_version_min = "4.5.0"
+
+# License - update as needed
+license = [ "SPDX:GPL-3.0-or-later", ]
+
+# Tags for categorization
+tags = ["3D View", "Physics", "Animation", "Simulation"]
+
+# Optional: Add your project website or repository
+# website = "https://github.com/yourusername/physics_dropper"
+
+# Optional: Copyright information
+copyright = [ "2024 Elin", ]
+
+# Build configuration to exclude unnecessary files
+[build]
+paths_exclude_pattern = [
+    "__pycache__/",
+    ".*",
+    "*.zip",
+    "*.log",
+    "*.crash.txt",
+    "claude-session*",
+]
+
+# Permissions (if your addon uses any external resources)
+# [permissions]
+# files = "Import/export physics simulation data"

@@ -839,11 +839,17 @@ operators = [
 ]
 
 def get_addon_preferences():
-    """Get addon preferences with safe fallback to defaults."""
+    """Get extension preferences with safe fallback to defaults."""
     try:
         preferences = bpy.context.preferences
-        addon_prefs = preferences.addons['physics_dropper'].preferences
-        return addon_prefs
+        # Try extension format first (Blender 4.5+)
+        try:
+            addon_prefs = preferences.addons[__package__].preferences
+            return addon_prefs
+        except (KeyError, AttributeError):
+            # Fallback to legacy addon format
+            addon_prefs = preferences.addons['physics_dropper'].preferences
+            return addon_prefs
     except (KeyError, AttributeError):
         # Return None if preferences not available (fallback to constants)
         return None

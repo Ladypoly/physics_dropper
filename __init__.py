@@ -1,8 +1,10 @@
 """
-Physics Dropper Addon for Blender
+Physics Dropper Extension for Blender
 Allows for easy setup of rigid body and cloth physics simulations.
 """
 
+# bl_info is optional for extensions with blender_manifest.toml
+# Kept for backward compatibility with addon format
 bl_info = {
     "name": "Physics Dropper",
     "description": "Easy rigidbody and cloth physics simulation setup with enhanced stability",
