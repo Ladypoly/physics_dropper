@@ -751,22 +751,24 @@ def drop_cloth() -> bool:
             if hasattr(scene, 'dropped'):
                 scene.dropped = True
 
-            # Collect active mesh objects from selection
-            active_objects = []
+            # Collect active mesh objects from selection (including collection instances)
             selected_objects = list(context.selected_objects)
 
             if not selected_objects:
                 log.error("No objects selected for cloth simulation")
                 return False
 
-            for obj in selected_objects:
-                if utils.is_object_valid(obj) and obj.type == "MESH":
-                    active_objects.append(obj)
-                    view_layer.objects.active = obj
-                    log.debug(f"Added active cloth object: {obj.name}")
+            # Use utility function to get mesh objects (handles collection instances)
+            active_objects = utils.get_mesh_objects_from_selection(selected_objects)
+
+            if active_objects:
+                # Set the last object as active
+                if len(active_objects) > 0:
+                    view_layer.objects.active = active_objects[-1]
+                    log.debug(f"Added {len(active_objects)} active cloth object(s)")
 
             if not active_objects:
-                log.error("No mesh objects found in selection for cloth simulation")
+                log.error("No mesh objects or collection instances found in selection for cloth simulation")
                 return False
 
             # Update state with active objects
@@ -780,16 +782,18 @@ def drop_cloth() -> bool:
                 log.error(f"Failed to invert selection: {e}")
                 return False
 
-            # Filter out non-mesh objects from inverted selection
+            # Filter out non-mesh objects and non-instances from inverted selection
             collision_objects = []
             for obj in context.selected_objects:
-                if utils.is_object_valid(obj) and obj.type == "MESH":
-                    collision_objects.append(obj)
-                else:
-                    try:
-                        obj.select_set(False)
-                    except ReferenceError:
-                        continue
+                if utils.is_object_valid(obj):
+                    # Keep mesh objects and collection instances
+                    if obj.type == "MESH" or utils.is_collection_instance(obj):
+                        collision_objects.append(obj)
+                    else:
+                        try:
+                            obj.select_set(False)
+                        except ReferenceError:
+                            continue
 
             log.info(f"Found {len(collision_objects)} potential collision objects")
 

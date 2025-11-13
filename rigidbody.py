@@ -783,20 +783,18 @@ def drop_rigid() -> bool:
             if scene:
                 scene.dropped = True
 
-            # Collect active mesh objects
+            # Collect active mesh objects (including collection instances)
             selected_objects = safe_context_access("selected_objects", [])
-            active_objects = []
+            active_objects = utils.get_mesh_objects_from_selection(selected_objects)
 
-            for obj in selected_objects:
-                if utils.is_object_valid(obj) and safe_object_access(obj, "type") == "MESH":
-                    active_objects.append(obj)
-
-                    view_layer = safe_context_access("view_layer")
-                    if view_layer:
-                        view_layer.objects.active = obj
+            if active_objects:
+                # Set the last object as active
+                view_layer = safe_context_access("view_layer")
+                if view_layer and len(active_objects) > 0:
+                    view_layer.objects.active = active_objects[-1]
 
             if not active_objects:
-                logger.error("No valid mesh objects selected for rigidbody physics")
+                logger.error("No valid mesh objects or collection instances selected for rigidbody physics")
                 return False
 
             utils.state.set_rigidbody("active", active_objects)
@@ -808,14 +806,17 @@ def drop_rigid() -> bool:
             except Exception as e:
                 logger.warning("Failed to invert selection", e)
 
-            # Deselect non-mesh objects from the inverted selection
+            # Deselect non-mesh objects and non-instances from the inverted selection
             current_selection = safe_context_access("selected_objects", [])
             for obj in current_selection:
-                if utils.is_object_valid(obj) and safe_object_access(obj, "type") != "MESH":
-                    try:
-                        obj.select_set(False)
-                    except Exception as e:
-                        logger.warning(f"Failed to deselect non-mesh object", e)
+                if utils.is_object_valid(obj):
+                    obj_type = safe_object_access(obj, "type")
+                    # Keep only mesh objects and collection instances
+                    if obj_type != "MESH" and not utils.is_collection_instance(obj):
+                        try:
+                            obj.select_set(False)
+                        except Exception as e:
+                            logger.warning(f"Failed to deselect non-mesh object", e)
 
             # Create passive collision object
             if not duplicate(constants.COLLIDER_OBJECT_NAME, 'WIRE'):

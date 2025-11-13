@@ -178,24 +178,141 @@ def unregister_icons() -> bool:
         logger.error("Failed to unregister icons", e)
         return False
 
+def is_collection_instance(obj: Any) -> bool:
+    """Check if an object is a collection instance.
+
+    Args:
+        obj: The Blender object to check
+
+    Returns:
+        True if the object is a collection instance, False otherwise
+    """
+    try:
+        if not is_object_valid(obj):
+            return False
+        return (safe_object_access(obj, "type") == "EMPTY" and
+                safe_object_access(obj, "instance_type") == "COLLECTION" and
+                safe_object_access(obj, "instance_collection") is not None)
+    except Exception as e:
+        logger.warning(f"Error checking if object is collection instance", e)
+        return False
+
+
+def realize_collection_instance(instance_obj: Any) -> List[Any]:
+    """Convert a collection instance into real mesh objects.
+
+    Args:
+        instance_obj: The collection instance object to realize
+
+    Returns:
+        List of realized mesh objects
+    """
+    realized_objects = []
+
+    try:
+        with SafeOperation("realize_collection_instance"):
+            if not is_collection_instance(instance_obj):
+                logger.warning(f"Object is not a collection instance: {safe_object_access(instance_obj, 'name', 'Unknown')}")
+                return realized_objects
+
+            # Store the instance name and collection
+            instance_name = safe_object_access(instance_obj, "name", "Instance")
+            collection = safe_object_access(instance_obj, "instance_collection")
+
+            if not collection:
+                logger.warning(f"Collection instance has no collection: {instance_name}")
+                return realized_objects
+
+            # Select only the instance object
+            safe_deselect_all()
+            if not safe_select_object(instance_obj):
+                logger.warning(f"Failed to select instance object: {instance_name}")
+                return realized_objects
+
+            # Make instances real using Blender's operator
+            try:
+                bpy.ops.object.duplicates_make_real(use_base_parent=False, use_hierarchy=False)
+                logger.info(f"Realized collection instance: {instance_name}")
+
+                # The newly created objects are now selected
+                selected_after = safe_context_access("selected_objects", [])
+
+                # Filter for mesh objects only
+                for obj in selected_after:
+                    if is_object_valid(obj) and safe_object_access(obj, "type") == "MESH":
+                        realized_objects.append(obj)
+
+                logger.info(f"Created {len(realized_objects)} mesh object(s) from instance")
+
+            except Exception as e:
+                logger.error(f"Failed to make duplicates real for {instance_name}", e)
+
+    except Exception as e:
+        logger.error("Error realizing collection instance", e)
+
+    return realized_objects
+
+
+def get_mesh_objects_from_selection(selected_objects: List[Any]) -> List[Any]:
+    """Get mesh objects from selection, including realized collection instances.
+
+    Args:
+        selected_objects: List of selected Blender objects
+
+    Returns:
+        List of mesh objects, with collection instances converted to mesh objects
+    """
+    mesh_objects = []
+    instances_realized = []
+
+    try:
+        with SafeOperation("get_mesh_objects_from_selection"):
+            for obj in selected_objects:
+                if not is_object_valid(obj):
+                    continue
+
+                obj_type = safe_object_access(obj, "type")
+
+                # Regular mesh objects
+                if obj_type == "MESH":
+                    mesh_objects.append(obj)
+
+                # Collection instances - need to realize them
+                elif is_collection_instance(obj):
+                    realized_objects = realize_collection_instance(obj)
+                    if realized_objects:
+                        mesh_objects.extend(realized_objects)
+                        instances_realized.append(obj.name if is_object_valid(obj) else "unknown")
+
+            if instances_realized:
+                logger.info(f"Realized {len(instances_realized)} collection instance(s): {', '.join(instances_realized)}")
+
+    except Exception as e:
+        logger.error("Error getting mesh objects from selection", e)
+
+    return mesh_objects
+
+
 def check_mesh_selected() -> bool:
-    """Check if a mesh object is selected."""
+    """Check if a mesh object or collection instance is selected."""
     try:
         with SafeOperation("check_mesh_selected"):
             selected_objects = safe_context_access("selected_objects", [])
 
+            # Check for both mesh objects and collection instances
             mesh_selected = any(
-                safe_object_access(obj, "type") == "MESH"
+                safe_object_access(obj, "type") == "MESH" or is_collection_instance(obj)
                 for obj in selected_objects
             )
 
             state.set_physics_dropper("mesh_selected", mesh_selected)
 
             if not mesh_selected:
-                logger.warning("No mesh objects selected")
+                logger.warning("No mesh objects or collection instances selected")
             else:
                 mesh_count = sum(1 for obj in selected_objects if safe_object_access(obj, "type") == "MESH")
-                # logger.info(f"Found {mesh_count} mesh objects selected")
+                instance_count = sum(1 for obj in selected_objects if is_collection_instance(obj))
+                # logger.info(f"Found {mesh_count} mesh object(s) and {instance_count} collection instance(s) selected")
 
             return mesh_selected
     except Exception as e:
