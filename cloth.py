@@ -266,8 +266,9 @@ def duplicate_cloth(name: str, display_as: str) -> bool:
                     active_object.name = name
                     active_object.parent_bone = ""
 
-                    # Add optimization modifiers
-                    _add_cloth_optimization_modifiers(active_object)
+                    # Add modifiers (fatten always, remesh/decimate only if proxy enabled)
+                    optimize_high_poly = safe_object_access(scene, 'p_optimizehighpoly', False)
+                    _add_cloth_optimization_modifiers(active_object, optimize_high_poly)
 
                     log.info(f"Successfully created cloth collision object: {name}")
                     op.success = True
@@ -284,29 +285,40 @@ def duplicate_cloth(name: str, display_as: str) -> bool:
             log.error(f"Unexpected error in cloth duplication: {e}")
             return False
 
-def _add_cloth_optimization_modifiers(obj: Any) -> None:
+def _add_cloth_optimization_modifiers(obj: Any, optimize_high_poly: bool = False) -> None:
     """Add optimization modifiers to cloth collision object.
 
     Args:
         obj: The object to add modifiers to
+        optimize_high_poly: Whether to apply remesh and decimate optimization
     """
     try:
         scene = safe_context_access("scene")
         if not scene:
             return
 
-        # Add remesh modifier if voxel size is set
-        voxel_size = safe_object_access(scene, "p_voxelsize", 0.0)
-        if voxel_size != 0.0:
-            remesh = obj.modifiers.new(name="Remesh", type='REMESH')
-            remesh.voxel_size = max(constants.VOXEL_SIZE_MIN, min(constants.VOXEL_SIZE_MAX, voxel_size))
-            log.debug(f"Added remesh modifier with voxel size: {remesh.voxel_size}")
+        # Add solidify modifier for fattening the collider (always applied)
+        fatten_amount = safe_object_access(scene, "c_p_fatten", 0.1)
+        if fatten_amount > 0.0:
+            solidify = obj.modifiers.new(name="Fatten", type='SOLIDIFY')
+            solidify.thickness = fatten_amount
+            solidify.offset = 1.0  # Push outward
+            log.debug(f"Added solidify modifier with thickness: {fatten_amount}")
 
-        # Add decimate modifier
-        decimate_rate = safe_object_access(scene, "p_decimaterate", constants.DECIMATE_RATIO_DEFAULT)
-        decimate = obj.modifiers.new(name="Decimate", type='DECIMATE')
-        decimate.ratio = max(constants.DECIMATE_RATIO_MIN, min(constants.DECIMATE_RATIO_MAX, decimate_rate))
-        log.debug(f"Added decimate modifier with ratio: {decimate.ratio}")
+        # Add optimization modifiers only if proxy is enabled
+        if optimize_high_poly:
+            # Add remesh modifier if voxel size is set
+            voxel_size = safe_object_access(scene, "p_voxelsize", 0.0)
+            if voxel_size != 0.0:
+                remesh = obj.modifiers.new(name="Remesh", type='REMESH')
+                remesh.voxel_size = max(constants.VOXEL_SIZE_MIN, min(constants.VOXEL_SIZE_MAX, voxel_size))
+                log.debug(f"Added remesh modifier with voxel size: {remesh.voxel_size}")
+
+            # Add decimate modifier
+            decimate_rate = safe_object_access(scene, "p_decimaterate", constants.DECIMATE_RATIO_DEFAULT)
+            decimate = obj.modifiers.new(name="Decimate", type='DECIMATE')
+            decimate.ratio = max(constants.DECIMATE_RATIO_MIN, min(constants.DECIMATE_RATIO_MAX, decimate_rate))
+            log.debug(f"Added decimate modifier with ratio: {decimate.ratio}")
 
         # Convert to mesh
         try:

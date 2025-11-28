@@ -1,0 +1,92 @@
+================================================================================
+PHYSICS DROPPER - LISTING TEXT (FRIENDLY & PERSONAL VERSION)
+================================================================================
+
+================================================================================
+SHORT VERSION (For marketplaces with character limits)
+================================================================================
+
+**Let physics do the tedious work for you!**
+
+I created Physics Dropper after spending way too long manually placing objects in scenes. Now I just select what I want, hit Drop, and gravity does all the work—naturally settling everything into place.
+
+**Great for:**
+- Scattering rocks, debris, and clutter realistically
+- Creating natural-looking piles and arrangements
+- Quick scene layout without the tedium
+- Dropping dozens (or hundreds!) of objects at once
+
+**What you get:**
+- One-click rigidbody and cloth physics
+- Interactive force fields (press F to grab them in 3D space!)
+- Material presets (Cotton, Denim, Leather, Rubber, Silk)
+- Bake everything to keyframes when you're happy
+- Works with collection instances too
+
+**Works with Blender 4.2 through 5.0**
+
+This addon is completely free—I made it to solve my own workflow frustrations and figured others might find it useful too! If it saves you time and you're feeling generous, consider supporting development. It helps me keep improving this and contributes to the Blender Development Fund. 😊
+
+================================================================================
+LONGER VERSION (For website/GitHub)
+================================================================================
+
+**Confession time: I spent a whole week placing boxes in chaotic order. Then I spent another week making this addon so I'd never have to do that again.**
+
+### The Problem
+
+You know that soul-crushing feeling when you need to scatter 50 objects naturally? Moving each one by hand, rotating it, adjusting height, trying to make it look "random but not too random"? Yeah, I was done with that.
+
+### The Solution
+
+Physics Dropper is basically "let gravity handle it" turned into a workflow. Select your objects, click Drop, watch them fall into realistic positions. Not happy? Adjust the physics settings, add some force fields, run it again. When it looks good, bake it to keyframes and you're done.
+
+It's like Drop-It on steroids (but way more stable and with a lot more control).
+
+### How It Works
+
+**Basic Workflow:**
+1. Select the mesh objects you want to place
+2. Hit "Drop" (or press V)
+3. Play the simulation and watch physics do its magic
+4. Not quite right? Pause, tweak settings, try again
+5. Perfect? Hit "Apply" (Shift+V) to bake everything
+
+**The Fun Stuff:**
+
+**Rigidbody Physics** – Objects fall, bounce, collide, and settle naturally. Adjust mass, friction, bounciness, collision shapes—whatever you need. Got high-poly meshes? Enable proxy mode and it'll create optimized collision shapes automatically.
+
+**Cloth Simulation** – Turn objects into fabric with one click. Choose from material presets (I've tested these extensively: Cotton for general fabric, Denim for heavier stuff, Silk for flowing materials, etc.). Or go wild with the advanced settings if you want precise control.
+
+**Interactive Force Fields** – This is my favorite part. Press F to enter force mode, move your mouse around to position a force field in 3D space, scroll to adjust its radius. Hold Ctrl and click to snap it to surfaces. It's super intuitive once you try it.
+
+**Earthquake Effects** – Want everything to shake randomly? Enable earthquake mode and adjust intensity. Perfect for adding life to static scenes or creating destruction setups.
+
+### Real-World Uses
+
+I use this constantly for:
+- **Environment work** – Scattering rocks, branches, leaves
+- **Interior scenes** – Books on shelves, dishes on tables, clutter everywhere
+- **Product shots** – Arranging items in containers
+- **Animation blocking** – Quick layout before I refine with keyframes
+- **The "oh crap, I need 200 objects placed and I have 20 minutes" situations**
+
+### The Technical Stuff (If You Care)
+
+I built this properly—thread-safe state management, comprehensive error handling, optimized for large scenes. It's been tested with 1000+ objects and doesn't choke. The code is clean, documented, and handles edge cases gracefully.
+
+Performance optimizations in v1.3 make it 2-10x faster than before for common operations. Version validation ensures you know immediately if something's not compatible.
+
+### Why It's Free
+
+I made this to solve my own problems. Figured if it helps me, it'll probably help others too. That's the Blender community spirit, right?
+
+**That said...** if you find it genuinely useful and want to support continued development (and help fund the Blender Development Fund at the same time), the paid version is available. Your support means I can spend more time making this better instead of, you know, eating ramen. 😅
+
+But seriously—whether you grab the free version or support development, I just hope it saves you some time and frustration. Happy dropping!
+
+**– Elin**
+
+================================================================================
+END OF LISTING TEXT
+================================================================================

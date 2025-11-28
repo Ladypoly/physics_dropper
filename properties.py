@@ -505,6 +505,15 @@ def register_properties() -> bool:
             precision=1
         )
 
+        bpy.types.Scene.c_p_fatten = bpy.props.FloatProperty(
+            name='Collider Fatten',
+            description='Expand the collision mesh outward (Solidify thickness)',
+            default=0.1,
+            min=0.0,
+            soft_max=1.0,
+            precision=3
+        )
+
         # Detailed cloth simulation properties
         bpy.types.Scene.ca_qualitysteps = bpy.props.IntProperty(
             name='Quality Steps',
@@ -809,7 +818,7 @@ def unregister_properties() -> bool:
             # Earthquake properties
             'earthquake', 'earthquakex', 'earthquakey', 'earthquakez',
             # Cloth properties
-            'c_a_presets', 'c_p_damping', 'c_p_thick_outer', 'c_p_thick_inner', 'c_p_friction',
+            'c_a_presets', 'c_p_damping', 'c_p_thick_outer', 'c_p_thick_inner', 'c_p_friction', 'c_p_fatten',
             # Detailed cloth properties
             'ca_qualitysteps', 'ca_mass', 'ca_air_viscosity',
             'ca_stiff_tension', 'ca_stiff_compression', 'ca_stiff_shear', 'ca_stiff_bending',

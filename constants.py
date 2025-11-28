@@ -6,7 +6,8 @@ from typing import Dict, Tuple, Any
 
 # Version and metadata
 ADDON_VERSION = (1, 3, 0)
-BLENDER_MIN_VERSION = (2, 93, 5)
+BLENDER_MIN_VERSION = (4, 2, 0)  # Extension format introduced in 4.2.0
+BLENDER_MAX_VERSION = (5, 1, 0)  # Tested up to 5.0, allow 5.1 minor updates
 ADDON_NAME = "Physics Dropper"
 
 # Default values

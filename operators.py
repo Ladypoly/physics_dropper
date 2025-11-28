@@ -68,8 +68,8 @@ class PD_OT_Drop(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        selected_objects = safe_context_access("selected_objects", [])
-        return len(selected_objects) > 0
+        # Use context directly instead of safe_context_access() for better performance
+        return len(context.selected_objects) > 0
 
     def execute(self, context):
         try:
@@ -153,8 +153,8 @@ class PD_OT_Apply(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        scene = safe_context_access("scene")
-        return scene and getattr(scene, 'dropped', False)
+        # Use context directly for better performance in poll methods
+        return context.scene and getattr(context.scene, 'dropped', False)
 
     def execute(self, context):
         try:
@@ -213,8 +213,8 @@ class PD_OT_Reset(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        scene = safe_context_access("scene")
-        return scene and getattr(scene, 'dropped', False)
+        # Use context directly for better performance in poll methods
+        return context.scene and getattr(context.scene, 'dropped', False)
 
     def execute(self, context):
         try:
@@ -260,8 +260,8 @@ class PD_OT_ExitPhysicsMode(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        scene = safe_context_access("scene")
-        return scene and getattr(scene, 'dropped', False)
+        # Use context directly for better performance in poll methods
+        return context.scene and getattr(context.scene, 'dropped', False)
 
     def execute(self, context):
         try:
@@ -299,8 +299,8 @@ class PD_OT_SimpleForce(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        scene = safe_context_access("scene")
-        return scene and getattr(scene, 'dropped', False)
+        # Use context directly for better performance in poll methods
+        return context.scene and getattr(context.scene, 'dropped', False)
 
     def execute(self, context):
         try:
@@ -392,8 +392,8 @@ class PD_OT_ForceMode(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        scene = safe_context_access("scene")
-        return scene and getattr(scene, 'dropped', False)
+        # Use context directly for better performance in poll methods
+        return context.scene and getattr(context.scene, 'dropped', False)
 
     def invoke(self, context, event):
         """Start force mode"""
@@ -610,8 +610,9 @@ class PD_OT_BakeSimKeyframes(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        scene = safe_context_access("scene")
-        screen = safe_context_access("screen")
+        # Use context directly for better performance in poll methods
+        scene = context.scene
+        screen = context.screen
 
         # Only allow baking when simulation is dropped AND animation is paused AND rigidbody
         simulation_active = scene and getattr(scene, 'dropped', False) and getattr(scene, 'is_rigid', True)
@@ -750,8 +751,8 @@ class PD_OT_PauseSim(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        scene = safe_context_access("scene")
-        return scene and getattr(scene, 'dropped', False)
+        # Use context directly for better performance in poll methods
+        return context.scene and getattr(context.scene, 'dropped', False)
 
     def execute(self, context):
         try:

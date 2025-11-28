@@ -9,7 +9,8 @@ maintainer = "Elin <noreply@example.com>"
 type = "add-on"
 
 # Blender version support
-blender_version_min = "4.5.0"
+blender_version_min = "4.2.0"
+blender_version_max = "5.1.0"
 
 # License - update as needed
 license = [ "SPDX:GPL-3.0-or-later", ]

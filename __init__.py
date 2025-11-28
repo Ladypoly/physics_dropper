@@ -49,9 +49,35 @@ def undo_pre_handler(dummy):
     except Exception as e:
         logger.logger.error("Error in undo handler", e)
 
+def validate_blender_version() -> bool:
+    """Validate Blender version compatibility at runtime."""
+    version = bpy.app.version
+
+    # Check minimum version
+    if version < constants.BLENDER_MIN_VERSION:
+        error_msg = (
+            f"Physics Dropper requires Blender {'.'.join(map(str, constants.BLENDER_MIN_VERSION))} or newer, "
+            f"but found {'.'.join(map(str, version))}"
+        )
+        logger.logger.critical(error_msg)
+        raise RuntimeError(error_msg)
+
+    # Warn about untested future versions
+    if version >= constants.BLENDER_MAX_VERSION:
+        logger.logger.warning(
+            f"Blender {'.'.join(map(str, version))} is newer than tested version "
+            f"{'.'.join(map(str, constants.BLENDER_MAX_VERSION))}. Extension may not work correctly."
+        )
+
+    logger.logger.info(f"Blender version {'.'.join(map(str, version))} is compatible")
+    return True
+
 def register():
     """Register the addon with improved error handling."""
     try:
+        # Validate Blender version compatibility first
+        validate_blender_version()
+
         # logger.logger.info(f"Registering {constants.ADDON_NAME} v{constants.ADDON_VERSION}")
 
         # Initialize logging level from preferences if available

@@ -3,7 +3,7 @@
 > Easy rigidbody and cloth physics simulation setup with enhanced stability
 
 [![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/yourusername/physics_dropper)
-[![Blender](https://img.shields.io/badge/Blender-4.5%2B-orange.svg)](https://www.blender.org/)
+[![Blender](https://img.shields.io/badge/Blender-4.2--5.0-orange.svg)](https://www.blender.org/)
 [![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE)
 
 Physics Dropper is a comprehensive Blender extension that streamlines physics simulation setup for both rigid body and cloth simulations. With an intuitive interface, interactive force fields, and powerful baking tools, it makes complex physics accessible to everyone.
@@ -56,7 +56,7 @@ Physics Dropper is a comprehensive Blender extension that streamlines physics si
 ## Installation
 
 ### Requirements
-- **Blender 4.5.0** or newer
+- **Blender 4.2.0 - 5.0** (tested up to 5.0, may work with 5.1)
 
 ### Steps
 1. Download or clone this repository

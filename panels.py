@@ -748,6 +748,7 @@ class PD_PT_WorldCollisionSettings(bpy.types.Panel):
         col.prop(context.scene, 'c_p_thick_outer', text="Outer Thickness", slider=True)
         col.prop(context.scene, 'c_p_thick_inner', text="Inner Thickness", slider=True)
         col.prop(context.scene, 'c_p_friction', text="Friction", slider=True)
+        col.prop(context.scene, 'c_p_fatten', text="Collider Fatten", slider=True)
 
 
 ###############################################################################
