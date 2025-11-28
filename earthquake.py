@@ -33,6 +33,78 @@ def reset_fmodifier_list() -> bool:
             log.error(f"Failed to reset F-curve modifier list: {e}")
             return False
 
+def get_fcurves_from_object(obj: Any) -> Any:
+    """
+    Get F-curves from an object, compatible with Blender 4.5 and 5.0+.
+
+    Handles both legacy action.fcurves API (Blender 4.x) and new
+    channelbag-based API (Blender 5.0+).
+
+    Args:
+        obj: The Blender object to get F-curves from
+
+    Returns:
+        F-curves collection or None if not found
+    """
+    # Get animation data
+    animation_data = safe_object_access(obj, "animation_data")
+    if not animation_data:
+        log.debug("No animation_data found on object")
+        return None
+
+    action = safe_object_access(animation_data, "action")
+    if not action:
+        log.debug("No action found in animation_data")
+        return None
+
+    # Method 1: Try legacy Blender 4.x method first (simpler, faster if available)
+    if hasattr(action, 'fcurves'):
+        fcurves = safe_object_access(action, "fcurves")
+        if fcurves:
+            log.debug(f"Found F-curves via legacy action.fcurves (Blender 4.x)")
+            return fcurves
+
+    # Method 2: Try Blender 5.0+ channelbag method
+    log.debug("Legacy method unavailable, trying channelbag method (Blender 5.0+)")
+
+    # Check if action has the new slot-based system
+    if not hasattr(action, 'slots') or len(action.slots) == 0:
+        log.debug("Action has no slots (channelbag system unavailable)")
+        return None
+
+    # Try using bpy_extras helper (official method)
+    try:
+        from bpy_extras import anim_utils
+
+        action_slot = safe_object_access(animation_data, "action_slot")
+        if action_slot:
+            channelbag = anim_utils.action_get_channelbag_for_slot(action, action_slot)
+            if channelbag:
+                fcurves = safe_object_access(channelbag, "fcurves")
+                if fcurves:
+                    log.debug(f"Found F-curves via channelbag (Blender 5.0+ official method)")
+                    return fcurves
+    except (ImportError, AttributeError, Exception) as e:
+        log.debug(f"bpy_extras.anim_utils method failed: {e}")
+
+    # Method 3: Manual channelbag iteration (fallback)
+    try:
+        if hasattr(action, 'layers') and len(action.layers) > 0:
+            layer = action.layers[0]
+            if hasattr(layer, 'strips') and len(layer.strips) > 0:
+                strip = layer.strips[0]
+                if hasattr(strip, 'channelbags'):
+                    for channelbag in strip.channelbags:
+                        fcurves = safe_object_access(channelbag, "fcurves")
+                        if fcurves and len(fcurves) > 0:
+                            log.debug(f"Found F-curves via manual channelbag iteration")
+                            return fcurves
+    except Exception as e:
+        log.debug(f"Manual channelbag iteration failed: {e}")
+
+    log.error("Could not find F-curves using any method (legacy or channelbag)")
+    return None
+
 @log_errors
 def earthquake_function(obj: Any, keyindex: int, curveindex: int) -> bool:
     """Set up earthquake animation for an object with safe modifier management.
@@ -89,12 +161,9 @@ def earthquake_function(obj: Any, keyindex: int, curveindex: int) -> bool:
                 log.error(f"No animation data found for object {obj.name} after keyframe insertion")
                 return False
 
-            action = safe_object_access(animation_data, "action")
-            if not action:
-                log.error(f"No action found for object {obj.name}")
-                return False
+            # Get F-curves using compatibility helper
+            fcurves = get_fcurves_from_object(obj)
 
-            fcurves = safe_object_access(action, "fcurves")
             if not fcurves:
                 log.error(f"No F-curves found for object {obj.name}")
                 return False
